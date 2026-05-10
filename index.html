@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>KCPO Music Meaning Editor v10</title>
+<style>
+:root{--font-ja:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",sans-serif}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-ja);background:#f5f5f7;color:#1d1d1f;font-size:13px;line-height:1.5}
+.shell{display:flex;height:100vh;height:100dvh;border:.5px solid #d2d2d7;overflow:hidden;background:#fff}
+.resizer{width:10px;cursor:col-resize;background:transparent;flex-shrink:0;touch-action:none;z-index:10;position:relative;-webkit-tap-highlight-color:transparent}
+.resizer:hover,.resizer.dragging{background:rgba(99,153,34,.25)}
+.left{width:160px;min-width:80px;flex-shrink:0;flex-grow:0;border-right:.5px solid #d2d2d7;display:flex;flex-direction:column;background:#f9f9fb;overflow:hidden}
+.left-top{padding:10px;border-bottom:.5px solid #d2d2d7;flex-shrink:0}
+.left-top input{width:100%;padding:6px 10px;border:.5px solid #c7c7cc;border-radius:8px;background:#fff;color:#1d1d1f;font-size:12px;font-family:var(--font-ja);outline:none}
+.left-top input:focus{border-color:#639922}
+.filters{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.fc{padding:3px 8px;border:.5px solid #c7c7cc;border-radius:20px;font-size:11px;cursor:pointer;color:#6e6e73;background:transparent;font-family:var(--font-ja);white-space:nowrap}
+.fc.on{background:#e8f0fb;color:#185FA5;border-color:transparent}
+.pcount{font-size:11px;color:#aeaeb2;margin-top:6px}
+.plist{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.pitem{padding:8px 12px;border-bottom:.5px solid #d2d2d7;cursor:pointer;display:flex;align-items:center;gap:8px;justify-content:space-between}
+.pitem:hover{background:#fff}
+.pitem.active{background:#fff;border-left:2px solid #639922}
+.pitem.active .pt{color:#1d1d1f}
+.pdot{width:6px;height:6px;border-radius:50%;background:#639922;flex-shrink:0;opacity:0}
+.pitem.tagged .pdot{opacity:1}
+.pinfo{min-width:0;flex:1}
+.ptag-cnt{font-size:10px;font-weight:600;color:#639922;background:#EAF3DE;padding:1px 5px;border-radius:10px;flex-shrink:0;white-space:nowrap}
+.pc{font-size:11px;color:#aeaeb2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pt{font-size:12px;color:#6e6e73;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.right{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.top-bar{padding:10px 16px;border-bottom:.5px solid #d2d2d7;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:#fff}
+.app-title{font-size:13px;font-weight:500;color:#6e6e73}
+.top-actions{display:flex;gap:8px;align-items:center}
+.btn{padding:5px 12px;border:.5px solid #c7c7cc;border-radius:8px;background:transparent;color:#6e6e73;font-size:12px;font-family:var(--font-ja);cursor:pointer}
+.btn:hover{background:#f9f9fb}
+.btn-primary{background:#639922;color:#173404;border-color:#639922;font-weight:500}
+.btn-primary:hover{background:#3B6D11;color:#C0DD97}
+.btn-ai{background:#e8f0fb;color:#185FA5;border-color:transparent}
+.stat-row{display:flex;gap:16px;padding:8px 16px;border-bottom:.5px solid #d2d2d7;flex-shrink:0;background:#f9f9fb}
+.stat{text-align:center}.stat-n{font-size:15px;font-weight:500;color:#639922}.stat-l{font-size:10px;color:#aeaeb2}
+.ss-msg{font-size:11px;color:#639922;font-weight:500}
+.editor{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:16px}
+.no-sel{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#aeaeb2;gap:6px;text-align:center}
+.no-sel-icon{font-size:32px;opacity:.4}
+.piece-composer{font-size:11px;font-weight:500;color:#639922;letter-spacing:.05em;margin-bottom:3px}
+.piece-title{font-size:17px;font-weight:500;color:#1d1d1f;line-height:1.3;margin-bottom:6px}
+.piece-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.badge{padding:2px 8px;border-radius:20px;font-size:11px;border:.5px solid #c7c7cc;color:#6e6e73}
+.badge.yr{border-color:#b8d4f5;color:#185FA5}
+.etags-sec{margin-bottom:14px}
+.etags-label{font-size:11px;color:#aeaeb2;margin-bottom:5px;font-weight:500}
+.etag{display:inline-flex;padding:2px 8px;border-radius:20px;border:.5px solid #3B6D11;background:#EAF3DE;color:#27500A;font-size:11px;margin:2px}
+.ai-banner{padding:8px 12px;border:.5px solid #b8d4f5;border-radius:8px;background:#e8f0fb;margin-bottom:14px}
+.ai-banner-txt{font-size:12px;color:#185FA5;font-weight:500}
+.ai-status{font-size:11px;color:#185FA5;margin-top:3px;opacity:.8}
+.cat-section{margin-bottom:14px}
+.cat-hdr{display:flex;align-items:center;justify-content:space-between;padding:4px 0 6px;border-bottom:.5px solid #d2d2d7;margin-bottom:8px}
+.cat-name{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#aeaeb2}
+.cat-count{font-size:11px;color:#639922;font-weight:600;background:#EAF3DE;padding:1px 7px;border-radius:20px}
+.tags-row{display:flex;flex-wrap:wrap;gap:6px}
+.tchip{padding:5px 12px;border:1px solid #c7c7cc;border-radius:20px;background:#fff;color:#6e6e73;font-size:12px;font-family:var(--font-ja);cursor:pointer;white-space:nowrap;user-select:none;-webkit-user-select:none;transition:border-color .1s,background .1s,color .1s}
+.tchip:hover{border-color:#639922;color:#27500A}
+.tchip.on{background:#EAF3DE;border-color:#3B6D11;color:#173404;font-weight:600}
+.tchip.ai-prop{border-color:#185FA5;background:#e8f0fb;color:#0C447C}
+.add-cat-wrap{margin-top:6px}
+.add-cat-wrap button{width:100%;padding:7px 0;border:1px dashed #c7c7cc;border-radius:8px;background:transparent;color:#aeaeb2;font-size:12px;font-family:var(--font-ja);cursor:pointer}
+.add-cat-wrap button:hover{background:#f9f9fb;color:#6e6e73}
+.save-bar{padding:10px 16px;border-top:.5px solid #d2d2d7;display:flex;align-items:center;gap:10px;flex-shrink:0;background:#fff}
+.save-preview{flex:1;font-size:11px;color:#aeaeb2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#c7c7cc;border-radius:2px}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-box{background:#fff;border-radius:12px;padding:28px 28px 24px;width:360px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.18)}
+.modal-title{font-size:14px;font-weight:600;color:#1d1d1f;margin-bottom:6px;line-height:1.5}
+.modal-sub{font-size:12px;color:#6e6e73;margin-bottom:18px}
+.modal-label{font-size:11px;font-weight:500;color:#aeaeb2;margin-bottom:4px}
+.modal-input{width:100%;padding:8px 10px;border:.5px solid #c7c7cc;border-radius:8px;font-size:13px;font-family:var(--font-ja);outline:none;margin-bottom:14px}
+.modal-input:focus{border-color:#639922}
+.modal-textarea{width:100%;padding:8px 10px;border:.5px solid #c7c7cc;border-radius:8px;font-size:13px;font-family:var(--font-ja);outline:none;resize:vertical;min-height:80px;margin-bottom:6px}
+.modal-textarea:focus{border-color:#639922}
+.modal-count{font-size:10px;color:#aeaeb2;text-align:right;margin-bottom:18px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end}
+</style>
+</head>
+<body>
+
+<div class="modal-overlay" id="export-modal">
+  <div class="modal-box">
+    <div class="modal-title">タグ付けありがとうございます！<br>お名前を教えて下さい。<br>また、ご意見やご指摘など、メッセージがあればぜひ&#127926;</div>
+    <div class="modal-label">お名前</div>
+    <input class="modal-input" id="export-name" type="text" placeholder="例：山田太郎（必須）" maxlength="50" required>
+    <div class="modal-label">メッセージ（任意）</div>
+    <textarea class="modal-textarea" id="export-msg" placeholder="自由にどうぞ" maxlength="200"></textarea>
+    <div class="modal-count"><span id="msg-count">0</span> / 200</div>
+    <div style="font-size:11px;color:#aeaeb2;margin-bottom:14px;line-height:1.6">&#9993; 端末にダウンロードされたJSONファイルをメールに添付して下さい</div>
+    <div class="modal-actions">
+      <button class="btn" id="modal-cancel">キャンセル</button>
+      <button class="btn btn-primary" id="modal-ok">添付してメールを送る</button>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+  <div class="left">
+    <div class="left-top">
+      <input id="qi" type="text" placeholder="曲名・作曲家を検索">
+      <div class="filters">
+        <button class="fc on" id="f-all">すべて</button>
+        <button class="fc" id="f-tagged">タグ付き</button>
+        <button class="fc" id="f-none">未タグ</button>
+        <button class="fc" id="f-sym">交響曲</button>
+      </div>
+      <div class="pcount" id="pcnt"></div>
+    </div>
+    <div class="plist" id="plist"></div>
+  </div>
+  <div class="resizer" id="resizer"></div>
+  <div class="right">
+    <div class="top-bar">
+      <span class="app-title">KCPO Music Meaning Editor</span>
+      <div class="top-actions">
+        <span class="ss-msg" id="ssmsg"></span>
+        <button class="btn btn-ai" id="btn-ai" style="display:none">AI提案</button>
+        <button class="btn btn-primary" id="btn-save">保存</button>
+        <button class="btn" id="btn-export">タグ付結果をメール</button>
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="stat-n" id="st-total">0</div><div class="stat-l">総曲数</div></div>
+      <div class="stat"><div class="stat-n" id="st-tagged">0</div><div class="stat-l">タグ付き</div></div>
+      <div class="stat"><div class="stat-n" id="st-tags">0</div><div class="stat-l">総タグ数</div></div>
+      <div class="stat"><div class="stat-n" id="st-avg">0%</div><div class="stat-l">平均タグ数</div></div>
+      <div class="stat"><div class="stat-n" id="st-cov">0%</div><div class="stat-l">カバレッジ</div></div>
+    </div>
+    <div class="editor" id="editor">
+      <div class="no-sel" id="nosel">
+        <div class="no-sel-icon">♩</div>
+        <div style="font-size:14px;font-weight:500">楽曲を選択してください</div>
+        <div style="font-size:12px;margin-top:4px">左のリストから曲を選ぶとタグ編集が始まります</div>
+      </div>
+      <div id="econtent" style="display:none"></div>
+    </div>
+    <div class="save-bar">
+      <div class="save-preview" id="spreview">タグ未設定</div>
+      <button class="btn btn-primary" id="btn-save2">保存</button>
+    </div>
+  </div>
+</div>
+<script>
+// ============================================================
+// CATS — タグ定義（v10変更点）
+// 1. KCPOブランド → オーケストラブランディング
+// 2. 基礎・時代: 先頭に「バロック以前」、「近代」→「20世紀」
+// 3. 基礎・規模感 削除
+// 4. 基礎・編成 に11タグ追加
+// 5. 基礎・難易度 を5段階に全置換
+// ============================================================
+const TAG_LABEL={'emotion_sublime':'崇高','emotion_nostalgia':'郷愁','emotion_serenity':'静寂','emotion_ecstasy':'熱狂','emotion_unease':'不穏','emotion_hope':'希望','emotion_despair':'絶望','emotion_rapture':'陶酔','emotion_mystery':'神秘','emotion_melancholy':'憂鬱','emotion_trance':'恍惚','emotion_elation':'高揚','emotion_festivity':'祝祭','emotion_love':'愛','emotion_longing':'憧れ','emotion_solitude':'孤独','emotion_sensuality':'官能','emotion_violence':'暴力','emotion_transcendence':'超越','space_city':'都市','space_church':'教会','space_ocean':'海','space_forest':'森','space_battlefield':'戦場','space_foreign_land':'異国','space_cosmos':'宇宙','space_mountain':'山岳','space_court':'宮廷','space_ruin':'廃墟','space_nature':'自然','space_underground':'地下','space_river':'河川','brand_intellectual':'知的','brand_challenging':'挑戦的','brand_colorful':'色彩的','brand_philosophical':'哲学的','brand_narrative':'物語性','brand_discovery':'発見型','brand_large_scale':'巨大編成','brand_high_energy':'熱量型','brand_spirituality':'精神性','brand_reinterpretation':'王道再解釈','brand_contextual':'文脈型','audience_accessible':'初心者向け','audience_overwhelming':'圧倒系','audience_moving':'泣ける','audience_intellectual_pleasure':'知的快感','audience_immersive':'没入感','audience_impactful':'一撃性','audience_addictive':'中毒性','audience_lingering':'余韻型','audience_photogenic':'SNS映え','audience_storytelling':'ストーリー性','audience_atmospheric':'空気感型','audience_family_friendly':'ファミリー向け','audience_memorial':'メモリアル','audience_familiar':'聞いたことある','audience_heartfelt':'心に沁みる','audience_classic_choice':'王道','performer_brass_fun':'金管楽しい','performer_woodwind_fun':'木管楽しい','performer_strings_fun':'弦楽器楽しい','performer_percussion_fun':'打楽器楽しい','performer_solo_satisfaction':'ソロ快感','performer_harmony_pleasure':'ハーモニー快感','performer_high_achievement':'達成感大','performer_ensemble_difficulty':'アンサンブル難','performer_stamina_demanding':'スタミナ戦','performer_mental_focus':'精神集中','performer_disciplined':'修行型','performer_explosive':'爆発型','performer_many_notes':'細かい音符','performer_many_difficulties':'難所多い','performer_loud_sound':'大音量サウンド','performer_pleasant_melody':'気持ちいいメロディ','concept_faith':'信仰','concept_ethnicity':'民族','concept_death':'死','concept_civilization':'文明','concept_journey':'旅','concept_homeland':'故郷','concept_empire':'帝国','concept_revolution':'革命','concept_nature_worship':'自然崇拝','concept_individual_society':'個人と社会','concept_heroism':'英雄','concept_community':'共同体','concept_war':'戦争','concept_memory':'記憶','concept_urbanization':'都市化','concept_mechanization':'機械文明','concept_ritualism':'儀式性','body_dance':'舞踏','body_march':'行進','body_breath':'呼吸','body_ritual':'儀式','body_wave':'波動','body_flow':'流動','body_gravity':'重力','body_levitation':'浮遊','time_youth':'青春','time_reminiscence':'回想','time_eternity':'永遠','time_apocalypse':'終末','time_twilight':'黄昏','time_history':'歴史','time_dawn':'夜明け','time_seasons':'季節','time_cycle':'循環','light_radiance':'光','light_night':'夜','light_darkness':'闇','light_blue':'青','light_gold':'金色','light_transparency':'透明感','light_shadow':'陰影','light_dusk':'夕暮れ','light_vivid_color':'極彩色','era_pre_baroque':'バロック以前','era_classical':'古典','era_early_romantic':'初期ロマン','era_late_romantic':'後期ロマン','era_fin_de_siecle':'世紀末','era_20th_century':'20世紀','era_contemporary':'現代','inst_double_wind':'2管','inst_triple_wind':'3管','inst_quadruple_wind':'4管','inst_chorus':'合唱','inst_vocal_solo':'独唱','inst_organ':'オルガン','inst_offstage':'舞台裏','inst_special':'特殊楽器','inst_strings_only':'弦のみ','inst_winds_only':'管打のみ','inst_strings_woodwind':'弦＋木管','inst_strings_brass':'弦＋金管','inst_strings_perc':'弦＋打','inst_trombone':'トロンボーン','inst_tuba':'チューバ','inst_harp':'ハープ','inst_piano':'ピアノ','inst_celesta':'チェレスタ','inst_perc_up_to_3':'パーカッション3名以内','inst_perc_4_or_more':'パーカッション4名以上','level_junior':'ジュニアオケ','level_student':'学生オケ','level_amateur_basic':'社会人オケ初級','level_amateur_advanced':'社会人オケ上級','level_professional':'プロオケ','region_germany_austria':'ドイツ・オーストリア','region_france':'フランス','region_italy':'イタリア','region_spain':'スペイン','region_nordic':'北欧','region_eastern_europe':'東欧','region_russia':'ロシア','region_uk_us':'英米','region_latin_america':'中南米','region_asia':'アジア','freq_iconic':'超有名','freq_well_known':'有名','freq_standard':'中堅','freq_rare':'稀少','freq_unperformed':'未演奏級'};
+const CATS = [
+  {id:'emo', name:'感情', dv:true,  v:true,
+   core:[{id:'emotion_sublime',label:'崇高'},{id:'emotion_nostalgia',label:'郷愁'},{id:'emotion_serenity',label:'静寂'},{id:'emotion_ecstasy',label:'熱狂'},{id:'emotion_unease',label:'不穏'},{id:'emotion_hope',label:'希望'},{id:'emotion_despair',label:'絶望'},{id:'emotion_rapture',label:'陶酔'},{id:'emotion_mystery',label:'神秘'},{id:'emotion_melancholy',label:'憂鬱'},{id:'emotion_trance',label:'恍惚'},{id:'emotion_elation',label:'高揚'},{id:'emotion_festivity',label:'祝祭'},{id:'emotion_love',label:'愛'},{id:'emotion_longing',label:'憧れ'},{id:'emotion_solitude',label:'孤独'},{id:'emotion_sensuality',label:'官能'},{id:'emotion_violence',label:'暴力'},{id:'emotion_transcendence',label:'超越'}]},
+  {id:'space', name:'空間', dv:false, v:false,
+   core:[{id:'space_city',label:'都市'},{id:'space_church',label:'教会'},{id:'space_ocean',label:'海'},{id:'space_forest',label:'森'},{id:'space_battlefield',label:'戦場'},{id:'space_foreign_land',label:'異国'},{id:'space_cosmos',label:'宇宙'},{id:'space_mountain',label:'山岳'},{id:'space_court',label:'宮廷'},{id:'space_ruin',label:'廃墟'},{id:'space_nature',label:'自然'},{id:'space_underground',label:'地下'},{id:'space_river',label:'河川'}]},
+  {id:'brand', name:'オーケストラブランディング', dv:true,  v:true,
+   core:[{id:'brand_intellectual',label:'知的'},{id:'brand_challenging',label:'挑戦的'},{id:'brand_colorful',label:'色彩的'},{id:'brand_philosophical',label:'哲学的'},{id:'brand_narrative',label:'物語性'},{id:'brand_discovery',label:'発見型'},{id:'brand_large_scale',label:'巨大編成'},{id:'brand_high_energy',label:'熱量型'},{id:'brand_spirituality',label:'精神性'},{id:'brand_reinterpretation',label:'王道再解釈'},{id:'brand_contextual',label:'文脈型'}]},
+  {id:'aud', name:'観客体験', dv:true,  v:true,
+   core:[{id:'audience_accessible',label:'初心者向け'},{id:'audience_overwhelming',label:'圧倒系'},{id:'audience_moving',label:'泣ける'},{id:'audience_intellectual_pleasure',label:'知的快感'},{id:'audience_immersive',label:'没入感'},{id:'audience_impactful',label:'一撃性'},{id:'audience_addictive',label:'中毒性'},{id:'audience_lingering',label:'余韻型'},{id:'audience_photogenic',label:'SNS映え'},{id:'audience_storytelling',label:'ストーリー性'},{id:'audience_atmospheric',label:'空気感型'},{id:'audience_family_friendly',label:'ファミリー向け'},{id:'audience_memorial',label:'メモリアル'},{id:'audience_familiar',label:'聞いたことある'},{id:'audience_heartfelt',label:'心に沁みる'},{id:'audience_classic_choice',label:'王道'}]},
+  {id:'ens', name:'団員体験', dv:true,  v:true,
+   core:[{id:'performer_brass_fun',label:'金管楽しい'},{id:'performer_woodwind_fun',label:'木管楽しい'},{id:'performer_strings_fun',label:'弦楽器楽しい'},{id:'performer_percussion_fun',label:'打楽器楽しい'},{id:'performer_solo_satisfaction',label:'ソロ快感'},{id:'performer_harmony_pleasure',label:'ハーモニー快感'},{id:'performer_high_achievement',label:'達成感大'},{id:'performer_ensemble_difficulty',label:'アンサンブル難'},{id:'performer_stamina_demanding',label:'スタミナ戦'},{id:'performer_mental_focus',label:'精神集中'},{id:'performer_disciplined',label:'修行型'},{id:'performer_explosive',label:'爆発型'},{id:'performer_many_notes',label:'細かい音符'},{id:'performer_many_difficulties',label:'難所多い'},{id:'performer_loud_sound',label:'大音量サウンド'},{id:'performer_pleasant_melody',label:'気持ちいいメロディ'}]},
+  {id:'idea', name:'思想', dv:false, v:false,
+   core:[{id:'concept_faith',label:'信仰'},{id:'concept_ethnicity',label:'民族'},{id:'concept_death',label:'死'},{id:'concept_civilization',label:'文明'},{id:'concept_journey',label:'旅'},{id:'concept_homeland',label:'故郷'},{id:'concept_empire',label:'帝国'},{id:'concept_revolution',label:'革命'},{id:'concept_nature_worship',label:'自然崇拝'},{id:'concept_individual_society',label:'個人と社会'},{id:'concept_heroism',label:'英雄'},{id:'concept_community',label:'共同体'},{id:'concept_war',label:'戦争'},{id:'concept_memory',label:'記憶'},{id:'concept_urbanization',label:'都市化'},{id:'concept_mechanization',label:'機械文明'},{id:'concept_ritualism',label:'儀式性'}]},
+  {id:'body', name:'身体性', dv:false, v:false,
+   core:[{id:'body_dance',label:'舞踏'},{id:'body_march',label:'行進'},{id:'body_breath',label:'呼吸'},{id:'body_ritual',label:'儀式'},{id:'body_wave',label:'波動'},{id:'body_flow',label:'流動'},{id:'body_gravity',label:'重力'},{id:'body_levitation',label:'浮遊'}]},
+  {id:'time', name:'時間感覚', dv:false, v:false,
+   core:[{id:'time_youth',label:'青春'},{id:'time_reminiscence',label:'回想'},{id:'time_eternity',label:'永遠'},{id:'time_apocalypse',label:'終末'},{id:'time_twilight',label:'黄昏'},{id:'time_history',label:'歴史'},{id:'time_dawn',label:'夜明け'},{id:'time_seasons',label:'季節'},{id:'time_cycle',label:'循環'}]},
+  {id:'light', name:'光・色彩', dv:false, v:false,
+   core:[{id:'light_radiance',label:'光'},{id:'light_night',label:'夜'},{id:'light_darkness',label:'闇'},{id:'light_blue',label:'青'},{id:'light_gold',label:'金色'},{id:'light_transparency',label:'透明感'},{id:'light_shadow',label:'陰影'},{id:'light_dusk',label:'夕暮れ'},{id:'light_vivid_color',label:'極彩色'}]},
+  {id:'era', name:'基礎・時代', dv:false, v:false,
+   core:[{id:'era_pre_baroque',label:'バロック以前'},{id:'era_classical',label:'古典'},{id:'era_early_romantic',label:'初期ロマン'},{id:'era_late_romantic',label:'後期ロマン'},{id:'era_fin_de_siecle',label:'世紀末'},{id:'era_20th_century',label:'20世紀'},{id:'era_contemporary',label:'現代'}]},
+  {id:'inst', name:'基礎・編成', dv:false, v:false,
+   core:[{id:'inst_double_wind',label:'2管'},{id:'inst_triple_wind',label:'3管'},{id:'inst_quadruple_wind',label:'4管'},{id:'inst_chorus',label:'合唱'},{id:'inst_vocal_solo',label:'独唱'},{id:'inst_organ',label:'オルガン'},{id:'inst_offstage',label:'舞台裏'},{id:'inst_special',label:'特殊楽器'},{id:'inst_strings_only',label:'弦のみ'},{id:'inst_winds_only',label:'管打のみ'},{id:'inst_strings_woodwind',label:'弦＋木管'},{id:'inst_strings_brass',label:'弦＋金管'},{id:'inst_strings_perc',label:'弦＋打'},{id:'inst_trombone',label:'トロンボーン'},{id:'inst_tuba',label:'チューバ'},{id:'inst_harp',label:'ハープ'},{id:'inst_piano',label:'ピアノ'},{id:'inst_celesta',label:'チェレスタ'},{id:'inst_perc_up_to_3',label:'パーカッション3名以内'},{id:'inst_perc_4_or_more',label:'パーカッション4名以上'}]},
+  {id:'diff', name:'基礎・難易度', dv:false, v:false,
+   core:[{id:'level_junior',label:'ジュニアオケ'},{id:'level_student',label:'学生オケ'},{id:'level_amateur_basic',label:'社会人オケ初級'},{id:'level_amateur_advanced',label:'社会人オケ上級'},{id:'level_professional',label:'プロオケ'}]},
+  {id:'region', name:'国家・地域', dv:false, v:false,
+   core:[{id:'region_germany_austria',label:'ドイツ・オーストリア'},{id:'region_france',label:'フランス'},{id:'region_italy',label:'イタリア'},{id:'region_spain',label:'スペイン'},{id:'region_nordic',label:'北欧'},{id:'region_eastern_europe',label:'東欧'},{id:'region_russia',label:'ロシア'},{id:'region_uk_us',label:'英米'},{id:'region_latin_america',label:'中南米'},{id:'region_asia',label:'アジア'}]},
+  {id:'freq', name:'基礎・演奏頻度', dv:false, v:false,
+   core:[{id:'freq_iconic',label:'超有名'},{id:'freq_well_known',label:'有名'},{id:'freq_standard',label:'中堅'},{id:'freq_rare',label:'稀少'},{id:'freq_unperformed',label:'未演奏級'}]}
+];
+
+const VALID_TAG_SET = new Set(CATS.flatMap(c => c.core.map(t => c.name+'::'+t)));
+
+const PIECES = [
+  {id:'p0000',cmp:'ニコライ',en:'Nicolai',title:'歌劇「ウィンザーの陽気な女房たち」序曲',isSym:false,dur:8,yr:1981,con:'第7回定期',tags:['リズミカル','ロマン派','有名曲','ストーリー性','独墺/ハプスブルク']},
+  {id:'p0003',cmp:'オッフェンバック',en:'Offenbach',title:'喜歌劇「天国と地獄(地獄のオルフェ)」序曲',isSym:false,dur:9,yr:1981,con:'春のﾎﾟﾋﾟｭﾗｰｺﾝｻｰﾄ',tags:['集客力','有名曲','リズミカル','ストーリー性','ロマン派','フランス']},
+  {id:'p0021',cmp:'プロコフィエフ',en:'Prokofiev',title:'「ロメオとジュリエット」組曲第1番 Op64から第6曲「ロメオとジュリエット」',isSym:false,dur:8,yr:2025,con:'第19回FC',tags:['有名曲','ストーリー性','集客力','旋律的','20世紀以降','ロシア']},
+  {id:'p0022',cmp:'プロコフィエフ',en:'Prokofiev',title:'「ロメオとジュリエット」組曲第2番 Op64から第5曲「別れの前のロメオとジュリエット」',isSym:false,dur:9,yr:2025,con:'第19回FC',tags:['有名曲','ストーリー性','集客力','旋律的','20世紀以降','ロシア']},
+  {id:'p0024',cmp:'プロコフィエフ',en:'Prokofiev',title:'交響的物語「ピーターと狼」 Op67',isSym:false,dur:23,yr:0,con:'未演奏',tags:['集客力','有名曲','20世紀以降','ロシア','ソリスティック']},
+  {id:'p0030',cmp:'ラヴェル',en:'Ravel',title:'スペイン狂詩曲',isSym:false,dur:15,yr:0,con:'未演奏',tags:['集客力','有名曲','リズミカル','民族的','20世紀以降','フランス','ソリスティック']},
+  {id:'p0032',cmp:'ラヴェル',en:'Ravel',title:'「ダフニスとクロエ」第2番 組曲',isSym:false,dur:17,yr:2023,con:'第74回定期',tags:['大迫力サウンド','リズミカル','集客力','20世紀以降','有名曲','フランス']},
+  {id:'p0033',cmp:'ラヴェル',en:'Ravel',title:'ボレロ',isSym:false,dur:15,yr:2003,con:'クリスマスFC',tags:['リズミカル','集客力','20世紀以降','有名曲','フランス','ソリスティック']},
+  {id:'p0036',cmp:'ラヴェル',en:'Ravel',title:'ラ・ヴァルス',isSym:false,dur:12,yr:2016,con:'第60回定期',tags:['大迫力サウンド','リズミカル','集客力','20世紀以降','有名曲','フランス']},
+  {id:'p0042',cmp:'レスピーギ',en:'Respighi',title:'交響詩「ローマの祭」',isSym:false,dur:24,yr:0,con:'未演奏',tags:['大迫力サウンド','リズミカル','集客力','20世紀以降','有名曲','ソリスティック']},
+  {id:'p0043',cmp:'レスピーギ',en:'Respighi',title:'交響詩「ローマの松」',isSym:false,dur:24,yr:1997,con:'第25回定期',tags:['大迫力サウンド','集客力','20世紀以降','有名曲','ソリスティック']},
+  {id:'p0053',cmp:'リムスキー=コルサコフ',en:'Rimsky-Korsakov',title:'スペイン奇想曲 Op34',isSym:false,dur:15,yr:2006,con:'第41回定期',tags:['リズミカル','民族的','ロマン派','集客力','有名曲','ロシア']},
+  {id:'p0054',cmp:'リムスキー=コルサコフ',en:'Rimsky-Korsakov',title:'交響組曲「シェへラザード」 Op35',isSym:false,dur:50,yr:0,con:'未演奏',tags:['有名曲','ロマン派','ロシア']},
+  {id:'p0058',cmp:'ロッシーニ',en:'Rossini',title:'歌劇「ウィリアム・テル」序曲',isSym:false,dur:11,yr:2022,con:'第73回定期',tags:['ストーリー性','ロマン派','有名曲','ソリスティック']},
+  {id:'p0059',cmp:'ロッシーニ',en:'Rossini',title:'歌劇「セビリアの理髪師」序曲',isSym:false,dur:8,yr:0,con:'未演奏',tags:['ストーリー性','ロマン派','有名曲','ソリスティック']},
+  {id:'p0064',cmp:'ロッシーニ',en:'Rossini',title:'歌劇「どろぼうかささぎ」序曲',isSym:false,dur:9,yr:0,con:'未演奏',tags:['ストーリー性','ロマン派','有名曲']},
+  {id:'p0071',cmp:'サン=サーンス',en:'Saint-Saëns',title:'動物の謝肉祭',isSym:false,dur:20,yr:0,con:'未演奏',tags:['有名曲','ロマン派','フランス']},
+  {id:'p0088',cmp:'シューベルト',en:'Schubert',title:'イタリア風序曲第1番 D590',isSym:false,dur:8,yr:0,con:'未演奏',tags:['ストーリー性','集客力','ロマン派','有名曲','独墺/ハプスブルク']},
+  {id:'p0089',cmp:'シューベルト',en:'Schubert',title:'イタリア風序曲第2番 Op170/D591',isSym:false,dur:8,yr:0,con:'未演奏',tags:['ストーリー性','集客力','ロマン派','有名曲','独墺/ハプスブルク']},
+  {id:'p0109',cmp:'シベリウス',en:'Sibelius',title:'交響詩「フィンランディア」 Op26',isSym:false,dur:9,yr:2017,con:'第12回FC',tags:['大迫力サウンド','有名曲','民族的','ストーリー性','集客力','ロマン派','北欧','ソリスティック']},
+  {id:'p0120',cmp:'シベリウス',en:'Sibelius',title:'カレリア組曲 Op.11',isSym:false,dur:15,yr:1977,con:'第3回定期',tags:['民族的','ロマン派','集客力','有名曲','北欧']},
+  {id:'p0125',cmp:'スメタナ',en:'Smetana',title:'交響詩「モルダウ(ヴァルタヴァ)」(連作交響詩「わが祖国」第2曲)',isSym:false,dur:12,yr:2024,con:'第18回FC',tags:['有名曲','民族的','ストーリー性','集客力','ロマン派','ソリスティック']},
+  {id:'p0141',cmp:'J. シュトラウス',en:'J.Strauss II',title:'皇帝円舞曲 Op437',isSym:false,dur:11,yr:0,con:'未演奏',tags:['リズミカル','有名曲','ロマン派','独墺/ハプスブルク']},
+  {id:'p0142',cmp:'J. シュトラウス',en:'J.Strauss II',title:'ワルツ「美しき青きドナウ」 Op314',isSym:false,dur:10,yr:2017,con:'第12回FC',tags:['リズミカル','有名曲','ロマン派','独墺/ハプスブルク','ソリスティック']},
+  {id:'p0148',cmp:'R. シュトラウス',en:'R.Strauss',title:'交響詩「ツァラトゥストラはかく語りき」 Op30',isSym:false,dur:35,yr:2023,con:'第75回定期',tags:['大迫力サウンド','有名曲','ストーリー性','集客力','ロマン派','独墺/ハプスブルク','ソリスティック']},
+  {id:'p0149',cmp:'R. シュトラウス',en:'R.Strauss',title:'交響詩「ティル=オイレンシュピーゲルの愉快な悪戯」 Op28',isSym:false,dur:15,yr:2012,con:'第52回定期',tags:['有名曲','ストーリー性','ロマン派','独墺/ハプスブルク','ソリスティック']},
+  {id:'p0153',cmp:'R. シュトラウス',en:'R.Strauss',title:'交響詩「英雄の生涯」Op40',isSym:false,dur:45,yr:2005,con:'第40回定期',tags:['大迫力サウンド','有名曲','ストーリー性','集客力','ロマン派','独墺/ハプスブルク','ソリスティック']},
+  {id:'p0158',cmp:'R. シュトラウス',en:'R.Strauss',title:'七つのヴェールの踊り(楽劇「サロメ」Op54より)',isSym:false,dur:8,yr:0,con:'未演奏',tags:['リズミカル','有名曲','ロマン派','独墺/ハプスブルク','ソリスティック']},
+  {id:'p0159',cmp:'R. シュトラウス',en:'R.Strauss',title:'交響詩「ドンファン」Op20',isSym:false,dur:17,yr:0,con:'未演奏',tags:['有名曲','ロマン派','独墺/ハプスブルク','ソリスティック']},
+  {id:'p0179',cmp:'ストラヴィンスキー',en:'Stravinsky',title:'バレエ組曲「火の鳥」(1919年版)',isSym:false,dur:22,yr:2021,con:'第71回定期',tags:['リズミカル','有名曲','集客力','旋律的','20世紀以降','ロシア','ソリスティック']},
+  {id:'p0180',cmp:'ストラヴィンスキー',en:'Stravinsky',title:'バレエ組曲「火の鳥」(1945年版)',isSym:false,dur:30,yr:1998,con:'第28回定期',tags:['リズミカル','有名曲','集客力','旋律的','20世紀以降','ロシア','ソリスティック']},
+  {id:'p0181',cmp:'ストラヴィンスキー',en:'Stravinsky',title:'バレエ音楽「春の祭典」',isSym:false,dur:33,yr:2015,con:'第59回定期',tags:['リズミカル','大迫力サウンド','有名曲','集客力','20世紀以降','ロシア','ソリスティック']},
+  {id:'p0192',cmp:'チャイコフスキー',en:'Tchaikovsky',title:'バレエ「くるみ割り人形」組曲 Op71a',isSym:false,dur:25,yr:2024,con:'第18回FC',tags:['リズミカル','有名曲','集客力','旋律的','ロマン派','ロシア','ソリスティック']},
+  {id:'p0193',cmp:'チャイコフスキー',en:'Tchaikovsky',title:'バレエ「白鳥の湖」組曲 Op20',isSym:false,dur:27,yr:2018,con:'第13回FC',tags:['リズミカル','有名曲','集客力','旋律的','ロマン派','ロシア','ソリスティック']},
+  {id:'p0194',cmp:'チャイコフスキー',en:'Tchaikovsky',title:'バレエ「眠りの森の美女」組曲 Op66',isSym:false,dur:23,yr:2007,con:'バレエ公演',tags:['リズミカル','有名曲','ロマン派','ロシア','ソリスティック']},
+  {id:'p0195',cmp:'チャイコフスキー',en:'Tchaikovsky',title:'イタリア奇想曲 Op45',isSym:false,dur:15,yr:2004,con:'第38回定期',tags:['リズミカル','有名曲','民族的','集客力','ロマン派','ロシア','ソリスティック']},
+  {id:'p0196',cmp:'チャイコフスキー',en:'Tchaikovsky',title:'スラブ行進曲 Op31',isSym:false,dur:10,yr:0,con:'未演奏',tags:['有名曲','民族的','ロマン派','ロシア']},
+  {id:'p0200',cmp:'チャイコフスキー',en:'Tchaikovsky',title:'幻想序曲「ロメオとジュリエット」',isSym:false,dur:18,yr:2006,con:'第41回定期',tags:['有名曲','集客力','ストーリー性','ロマン派','ロシア','ソリスティック']},
+  {id:'p0202',cmp:'チャイコフスキー',en:'Tchaikovsky',title:'大序曲「1812年」 Op49',isSym:false,dur:16,yr:2017,con:'第12回FC',tags:['有名曲','集客力','ストーリー性','ロマン派','ロシア','ソリスティック']},
+  {id:'p0207',cmp:'チャイコフスキー',en:'Tchaikovsky',title:'弦楽セレナーデ Op48',isSym:false,dur:30,yr:2018,con:'第13回FC',tags:['有名曲','集客力','ロマン派','ロシア']},
+  {id:'p0208',cmp:'チャイコフスキー',en:'Tchaikovsky',title:'バレエ音楽「くるみ割り人形」全曲 op.71',isSym:false,dur:85,yr:0,con:'未演奏',tags:['リズミカル','有名曲','集客力','旋律的','ロマン派','ロシア','ソリスティック']},
+  {id:'p0223',cmp:'ヴェルディ',en:'Verdi',title:'歌劇「アイーダ」から凱旋行進曲',isSym:false,dur:8,yr:0,con:'未演奏',tags:['有名曲','ロマン派']},
+  {id:'p0225',cmp:'ヴェルディ',en:'Verdi',title:'レクイエム',isSym:false,dur:90,yr:0,con:'未演奏',tags:['有名曲','ロマン派']},
+  {id:'p0235',cmp:'ワーグナー',en:'Wagner',title:'歌劇「タンホイザー」序曲',isSym:false,dur:14,yr:2007,con:'第44回定期',tags:['有名曲','集客力','ストーリー性','ロマン派','独墺/ハプスブルク']},
+  {id:'p0240',cmp:'ワーグナー',en:'Wagner',title:'楽劇「ニュールンベルクのマイスタージンガー」前奏 曲 (第1幕への前奏曲)',isSym:false,dur:11,yr:2025,con:'第19回FC',tags:['有名曲','集客力','ロマン派','独墺/ハプスブルク']},
+  {id:'p0252',cmp:'ワルトトイフェル',en:'Waldteufel',title:'ワルツ「スケートをする人々」 Op183',isSym:false,dur:8,yr:0,con:'未演奏',tags:['有名曲','集客力','ロマン派','独墺/ハプスブルク']},
+  {id:'p0257',cmp:'ウェーバー',en:'Weber',title:'歌劇「オベロン」序曲',isSym:false,dur:8,yr:2005,con:'第40回定期',tags:['有名曲','集客力','ストーリー性','ロマン派','独墺/ハプスブルク','ソリスティック']},
+  {id:'p0258',cmp:'ウェーバー',en:'Weber',title:'歌劇「魔弾の射手」Op77序 曲',isSym:false,dur:8,yr:1992,con:'第17回定期',tags:['有名曲','集客力','ロマン派','独墺/ハプスブルク']},
+  {id:'p0267',cmp:'ヴォルフ',en:'ヴォルフ',title:'イタリアのセレナード',isSym:false,dur:15,yr:0,con:'未演奏',tags:['旋律的','集客力','有名曲','ソリスティック']},
+  {id:'p0283',cmp:'ベートーヴェン',en:'Beethoven',title:'交響曲第3番「英雄」Op55',isSym:true,dur:52,yr:2004,con:'第38回定期',tags:['バロック・古典派','ストーリー性','集客力','有名曲','独墺/ハプスブルク','ソリスティック']},
+  {id:'p0285',cmp:'ベートーヴェン',en:'Beethoven',title:'交響曲第5番「運命」Op67',isSym:true,dur:35,yr:2023,con:'第17回FC',tags:['バロック・古典派','集客力','有名曲','独墺/ハプスブルク','ソリスティック']},
+  {id:'p0286',cmp:'ベートーヴェン',en:'Beethoven',title:'交響曲第6番「田園」Op68',isSym:true,dur:45,yr:2010,con:'第8回FC',tags:['有名曲','バロック・古典派','ストーリー性','集客力','旋律的','独墺/ハプスブルク','ソリスティック']},
+  {id:'p0287',cmp:'ベートーヴェン',en:'Beethoven',title:'交響曲第7番 Op92',isSym:true,dur:38,yr:2012,con:'第52回定期',tags:['有名曲','バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0289',cmp:'ベートーヴェン',en:'Beethoven',title:'交響曲第9番「合唱付き」 Op125',isSym:true,dur:72,yr:2001,con:'第33回定期',tags:['バロック・古典派','集客力','有名曲','独墺/ハプスブルク']},
+  {id:'p0293',cmp:'ベルリオーズ',en:'Berlioz',title:'幻想交響曲 Op14',isSym:true,dur:50,yr:2016,con:'第60回定期',tags:['大迫力サウンド','有名曲','ストーリー性','集客力','ロマン派','フランス','ソリスティック']},
+  {id:'p0304',cmp:'ボロディン',en:'Borodin',title:'交響曲第2番',isSym:true,dur:25,yr:2024,con:'第77回定期',tags:['有名曲','ロマン派','ロシア','ソリスティック']},
+  {id:'p0307',cmp:'ブラームス',en:'Brahms',title:'交響曲第1番 Op.68',isSym:true,dur:40,yr:2025,con:'第78回定期',tags:['有名曲','ロマン派','独墺/ハプスブルク','ソリスティック']},
+  {id:'p0308',cmp:'ブラームス',en:'Brahms',title:'交響曲第2番 Op.73',isSym:true,dur:40,yr:2007,con:'第43回定期',tags:['有名曲','ロマン派','独墺/ハプスブルク','ソリスティック']},
+  {id:'p0310',cmp:'ブラームス',en:'Brahms',title:'交響曲第4番 Op.98',isSym:true,dur:40,yr:2015,con:'第58回定期',tags:['有名曲','ロマン派','独墺/ハプスブルク']},
+  {id:'p0321',cmp:'ブルックナー',en:'Bruckner',title:'交響曲第4番「ロマンティック」',isSym:true,dur:65,yr:2016,con:'第61回定期',tags:['有名曲','ロマン派','独墺/ハプスブルク','ソリスティック']},
+  {id:'p0324',cmp:'ブルックナー',en:'Bruckner',title:'交響曲第7番',isSym:true,dur:65,yr:1999,con:'第29回定期',tags:['有名曲','ロマン派','独墺/ハプスブルク','ソリスティック']},
+  {id:'p0325',cmp:'ブルックナー',en:'Bruckner',title:'交響曲第8番',isSym:true,dur:80,yr:2011,con:'第51回定期',tags:['有名曲','ロマン派','独墺/ハプスブルク']},
+  {id:'p0326',cmp:'ブルックナー',en:'Bruckner',title:'交響曲第9番',isSym:true,dur:60,yr:2004,con:'第37回定期',tags:['有名曲','ロマン派','独墺/ハプスブルク']},
+  {id:'p0340',cmp:'ドヴォルザーク',en:'Dvořák',title:'交響曲第9番「新世界より」 Op95',isSym:true,dur:42,yr:2015,con:'第11回FC',tags:['集客力','ロマン派','有名曲','民族的','独墺/ハプスブルク','ソリスティック']},
+  {id:'p0484',cmp:'マーラー',en:'Mahler',title:'交響曲第1番「巨人」',isSym:true,dur:53,yr:1996,con:'第24回定期',tags:['有名曲','ロマン派','独墺/ハプスブルク']},
+  {id:'p0485',cmp:'マーラー',en:'Mahler',title:'交響曲第2番「復活」',isSym:true,dur:80,yr:2009,con:'第47回定期',tags:['有名曲','ロマン派','独墺/ハプスブルク']},
+  {id:'p0488',cmp:'マーラー',en:'Mahler',title:'交響曲第5番',isSym:true,dur:80,yr:2026,con:'第80回定期',tags:['有名曲','ロマン派','独墺/ハプスブルク']},
+  {id:'p0492',cmp:'マーラー',en:'Mahler',title:'交響曲第9番',isSym:true,dur:75,yr:2017,con:'第62回定期',tags:['有名曲','ロマン派','独墺/ハプスブルク']},
+  {id:'p0502',cmp:'メンデルスゾーン',en:'Mendelssohn',title:'交響曲第4番「イタリア」 Op90',isSym:true,dur:28,yr:2017,con:'第63回定期',tags:['集客力','ロマン派','有名曲','独墺/ハプスブルク']},
+  {id:'p0504',cmp:'メシアン',en:'Messiaen',title:'トゥーランガリラ交響曲',isSym:true,dur:75,yr:0,con:'未演奏',tags:['有名曲','20世紀以降','フランス']},
+  {id:'p0520',cmp:'W.A. モーツァルト',en:'W.A.Mozart',title:'交響曲第25番 K183(173dB)',isSym:false,dur:25,yr:1989,con:'第14回定期',tags:['集客力','有名曲','バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0530',cmp:'W.A. モーツァルト',en:'W.A.Mozart',title:'交響曲第35番「ハフナー」 K385',isSym:true,dur:17,yr:2016,con:'第61回定期',tags:['集客力','有名曲','バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0533',cmp:'W.A. モーツァルト',en:'W.A.Mozart',title:'交響曲第39番 K543',isSym:true,dur:25,yr:0,con:'未演奏',tags:['集客力','有名曲','バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0534',cmp:'W.A. モーツァルト',en:'W.A.Mozart',title:'交響曲第40番 K550',isSym:true,dur:30,yr:0,con:'未演奏',tags:['集客力','有名曲','バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0535',cmp:'W.A. モーツァルト',en:'W.A.Mozart',title:'交響曲第41番「ジュピター」 K551',isSym:true,dur:30,yr:0,con:'未演奏',tags:['集客力','有名曲','バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0543',cmp:'ニールセン',en:'Nielsen',title:'交響曲第4番「不滅」 FS76(Op.29)',isSym:false,dur:37,yr:2024,con:'第77回定期',tags:['有名曲','20世紀以降','北欧']},
+  {id:'p0546',cmp:'プロコフィエフ',en:'Prokofiev',title:'交響曲第1番「古典」Op25',isSym:true,dur:15,yr:2016,con:'バレエ公演',tags:['集客力','有名曲','20世紀以降','ロシア']},
+  {id:'p0550',cmp:'プロコフィエフ',en:'Prokofiev',title:'交響曲第5番 Op100',isSym:true,dur:40,yr:2021,con:'第71回定期',tags:['有名曲','20世紀以降','ロシア']},
+  {id:'p0554',cmp:'ラフマニノフ',en:'Rachmaninoff',title:'交響曲第2番 Op27',isSym:true,dur:55,yr:2008,con:'第46回定期',tags:['集客力','有名曲','ロマン派','ロシア']},
+  {id:'p0565',cmp:'サン=サーンス',en:'Saint-Saëns',title:'交響曲第3番「オルガン」Op78',isSym:true,dur:35,yr:2025,con:'第79回定期',tags:['集客力','有名曲','ロマン派','フランス']},
+  {id:'p0575',cmp:'シューベルト',en:'Schubert',title:'交響曲第7番(8)番「未完成」 D.759',isSym:true,dur:25,yr:2024,con:'第18回FC',tags:['旋律的','集客力','ロマン派','有名曲','独墺/ハプスブルク','ソリスティック']},
+  {id:'p0589',cmp:'ショスタコーヴィチ',en:'Shostakovich',title:'交響曲第5番 Op47',isSym:true,dur:45,yr:2022,con:'第16回FC',tags:['集客力','有名曲','20世紀以降','ロシア','ソリスティック']},
+  {id:'p0591',cmp:'ショスタコーヴィチ',en:'Shostakovich',title:'交響曲第7番「レニングラード」Op60',isSym:true,dur:72,yr:2019,con:'第66回定期',tags:['集客力','有名曲','20世紀以降','ロシア','ソリスティック']},
+  {id:'p0594',cmp:'ショスタコーヴィチ',en:'Shostakovich',title:'交響曲第10番 Op93',isSym:true,dur:50,yr:2006,con:'第42回定期',tags:['集客力','有名曲','20世紀以降','ロシア']},
+  {id:'p0602',cmp:'シベリウス',en:'Sibelius',title:'交響曲第2番 Op43',isSym:true,dur:45,yr:2018,con:'第65回定期',tags:['集客力','有名曲','ロマン派','北欧','ソリスティック']},
+  {id:'p0611',cmp:'R. シュトラウス',en:'R.Strauss',title:'アルプス交響曲 Op64',isSym:true,dur:50,yr:2011,con:'第50回定期',tags:['大迫力サウンド','有名曲','ストーリー性','集客力','ロマン派','独墺/ハプスブルク']},
+  {id:'p0620',cmp:'チャイコフスキー',en:'Tchaikovsky',title:'交響曲第4番 Op36',isSym:true,dur:45,yr:2023,con:'第74回定期',tags:['集客力','旋律的','民族的','有名曲','ロマン派','ロシア','ソリスティック']},
+  {id:'p0621',cmp:'チャイコフスキー',en:'Tchaikovsky',title:'交響曲第5番 Op64',isSym:true,dur:50,yr:2024,con:'第18回FC',tags:['集客力','旋律的','民族的','有名曲','ロマン派','ロシア','ソリスティック']},
+  {id:'p0622',cmp:'チャイコフスキー',en:'Tchaikovsky',title:'交響曲第6番「悲愴」Op74',isSym:true,dur:50,yr:2019,con:'第14回FC',tags:['集客力','民族的','旋律的','有名曲','ロマン派','ロシア','ソリスティック']},
+  {id:'p0643',cmp:'J.S. バッハ',en:'J.S.Bach',title:'2つのヴァイオリンのための協奏曲 BWV1043',isSym:false,dur:18,yr:0,con:'未演奏',tags:['集客力','有名曲','バロック・古典派','独墺/ハプスブルク','協奏曲']},
+  {id:'p0655',cmp:'ベートーヴェン',en:'Beethoven',title:'ヴァイオリン協奏曲 Op61',isSym:false,dur:43,yr:2015,con:'第59回定期',tags:['集客力','有名曲','バロック・古典派','独墺/ハプスブルク','協奏曲']},
+  {id:'p0660',cmp:'ベートーヴェン',en:'Beethoven',title:'ピアノ協奏曲第5番「皇帝」 Op73',isSym:false,dur:36,yr:1996,con:'ﾋﾟｱﾉｺﾝﾁｪﾙﾄ･ﾏﾁﾈ',tags:['集客力','有名曲','バロック・古典派','独墺/ハプスブルク','協奏曲']},
+  {id:'p0662',cmp:'ベートーヴェン',en:'Beethoven',title:'ヴァイオリンと管弦楽のためのロマンス第1番 Op40',isSym:false,dur:8,yr:0,con:'未演奏',tags:['集客力','有名曲','バロック・古典派','独墺/ハプスブルク','協奏曲']},
+  {id:'p0668',cmp:'ブラームス',en:'Brahms',title:'ヴァイオリンとチェロのための二重協奏曲 Op102',isSym:false,dur:30,yr:2007,con:'第43回定期',tags:['集客力','有名曲','ロマン派','独墺/ハプスブルク','協奏曲']},
+  {id:'p0669',cmp:'ブラームス',en:'Brahms',title:'ヴァイオリン協奏曲 ニ長調 Op77',isSym:false,dur:40,yr:0,con:'未演奏',tags:['集客力','有名曲','ロマン派','独墺/ハプスブルク','協奏曲']},
+  {id:'p0671',cmp:'ブラームス',en:'Brahms',title:'ピアノ協奏曲第2番 Op83',isSym:false,dur:48,yr:0,con:'未演奏',tags:['集客力','有名曲','ロマン派','独墺/ハプスブルク','協奏曲']},
+  {id:'p0672',cmp:'ブルッフ',en:'ブルッフ',title:'ヴァイオリン協奏曲第1番 ト短調 Op26',isSym:false,dur:25,yr:2022,con:'第73回定期',tags:['集客力','有名曲','ロマン派','独墺/ハプスブルク','協奏曲']},
+  {id:'p0673',cmp:'ブルッフ',en:'ブルッフ',title:'コル・ニドライ Op47',isSym:false,dur:10,yr:0,con:'未演奏',tags:['集客力','有名曲','ロマン派','独墺/ハプスブルク','協奏曲']},
+  {id:'p0674',cmp:'ブルッフ',en:'ブルッフ',title:'スコットランド幻想曲 Op46',isSym:false,dur:30,yr:0,con:'未演奏',tags:['集客力','有名曲','ロマン派','独墺/ハプスブルク','協奏曲']},
+  {id:'p0676',cmp:'ショパン',en:'Chopin',title:'ピアノ協奏曲第1番 Op11',isSym:false,dur:40,yr:1992,con:'光り輝くｺﾝﾁｪﾙﾄ',tags:['集客力','有名曲','ロマン派','協奏曲']},
+  {id:'p0677',cmp:'ショパン',en:'Chopin',title:'ピアノ協奏曲第2番 Op21',isSym:false,dur:32,yr:1981,con:'ﾋﾟｱﾉ協奏曲の夕べ',tags:['集客力','有名曲','ロマン派','協奏曲']},
+  {id:'p0681',cmp:'エルガー',en:'Elgar',title:'チェロ協奏曲 ホ短調 Op85',isSym:false,dur:29,yr:0,con:'未演奏',tags:['集客力','有名曲','ロマン派','英米その他','協奏曲']},
+  {id:'p0686',cmp:'グリーグ',en:'Grieg',title:'ピアノ協奏曲 イ短調 Op16',isSym:false,dur:30,yr:2022,con:'第16回FC',tags:['集客力','有名曲','ロマン派','北欧','協奏曲']},
+  {id:'p0698',cmp:'ハチャトゥリアン',en:'Khachaturian',title:'ヴァイオリン協奏曲',isSym:false,dur:35,yr:0,con:'未演奏',tags:['集客力','有名曲','20世紀以降','ロシア','協奏曲']},
+  {id:'p0703',cmp:'ラロ',en:'ラロ',title:'スペイン交響曲 Op21',isSym:false,dur:35,yr:0,con:'未演奏',tags:['集客力','有名曲','民族的','協奏曲']},
+  {id:'p0725',cmp:'W.A. モーツァルト',en:'W.A.Mozart',title:'ピアノ協奏曲第20番 ニ短調 K466',isSym:false,dur:32,yr:1988,con:'第7回日本ﾗｲﾄﾊｳｽ',tags:['集客力','有名曲','バロック・古典派','独墺/ハプスブルク','協奏曲']},
+  {id:'p0726',cmp:'W.A. モーツァルト',en:'W.A.Mozart',title:'ピアノ協奏曲第21番 K467',isSym:false,dur:31,yr:0,con:'未演奏',tags:['集客力','有名曲','バロック・古典派','独墺/ハプスブルク','協奏曲']},
+  {id:'p0728',cmp:'W.A. モーツァルト',en:'W.A.Mozart',title:'ピアノ協奏曲第23番 イ長調 K488',isSym:false,dur:26,yr:1996,con:'ﾋﾟｱﾉｺﾝﾁｪﾙﾄ･ﾏﾁﾈ',tags:['集客力','有名曲','バロック・古典派','独墺/ハプスブルク','協奏曲']},
+  {id:'p0735',cmp:'W.A. モーツァルト',en:'W.A.Mozart',title:'ヴァイオリン協奏曲第3番 ト長調 K216',isSym:false,dur:23,yr:0,con:'未演奏',tags:['集客力','有名曲','バロック・古典派','独墺/ハプスブルク','協奏曲']},
+  {id:'p0737',cmp:'W.A. モーツァルト',en:'W.A.Mozart',title:'ヴァイオリン協奏曲第5番 「トルコ風」K219',isSym:false,dur:28,yr:0,con:'未演奏',tags:['集客力','有名曲','バロック・古典派','独墺/ハプスブルク','協奏曲']},
+  {id:'p0740',cmp:'W.A. モーツァルト',en:'W.A.Mozart',title:'協奏交響曲 K364(K320d)',isSym:false,dur:40,yr:1985,con:'第10回定期',tags:['集客力','有名曲','バロック・古典派','独墺/ハプスブルク','協奏曲']},
+  {id:'p0750',cmp:'ラフマニノフ',en:'Rachmaninoff',title:'ピアノ協奏曲第2番 ハ短調 Op18',isSym:false,dur:35,yr:2007,con:'第44回定期',tags:['集客力','有名曲','ロマン派','ロシア','協奏曲']},
+  {id:'p0751',cmp:'ラフマニノフ',en:'Rachmaninoff',title:'ピアノ協奏曲第3番 ニ短調 Op30',isSym:false,dur:42,yr:0,con:'未演奏',tags:['集客力','有名曲','ロマン派','ロシア','協奏曲']},
+  {id:'p0753',cmp:'ラフマニノフ',en:'Rachmaninoff',title:'パガニーニの主題による狂詩曲 Op43',isSym:false,dur:24,yr:1982,con:'第8回定期',tags:['集客力','有名曲','ロマン派','ロシア','協奏曲']},
+  {id:'p0754',cmp:'ラヴェル',en:'Ravel',title:'ピアノ協奏曲 ト長調',isSym:false,dur:22,yr:1982,con:'協奏曲とｵﾍﾟﾗｱﾘｱの夕べ',tags:['集客力','有名曲','20世紀以降','フランス']},
+  {id:'p0759',cmp:'ロドリーゴ',en:'ロドリーゴ',title:'アランフェス協奏曲',isSym:false,dur:20,yr:0,con:'未演奏',tags:['集客力','有名曲','ロマン派','民族的','協奏曲']},
+  {id:'p0770',cmp:'サン=サーンス',en:'Saint-Saëns',title:'序奏とロンド・カプリチオーソ Op28',isSym:false,dur:9,yr:0,con:'未演奏',tags:['集客力','有名曲','ロマン派','フランス','協奏曲']},
+  {id:'p0778',cmp:'シューマン',en:'Schumann',title:'ピアノ協奏曲 イ短調 Op54',isSym:false,dur:30,yr:1992,con:'光り輝くｺﾝﾁｪﾙﾄ',tags:['集客力','有名曲','ロマン派','独墺/ハプスブルク','協奏曲']},
+  {id:'p0781',cmp:'シューマン',en:'Schumann',title:'4本のホルンとオーケストラのためのコンチェルトシュトゥック Op86',isSym:false,dur:21,yr:0,con:'未演奏',tags:['集客力','有名曲','ロマン派','独墺/ハプスブルク','協奏曲']},
+  {id:'p0785',cmp:'ショスタコーヴィチ',en:'Shostakovich',title:'ピアノ協奏曲第1番(ピアノ、トランペットと弦楽のための協奏曲) Op35',isSym:false,dur:21,yr:0,con:'未演奏',tags:['集客力','有名曲','20世紀以降','ロシア','協奏曲']},
+  {id:'p0786',cmp:'シベリウス',en:'Sibelius',title:'ヴァイオリン協奏曲 ニ短調 Op47',isSym:false,dur:33,yr:0,con:'未演奏',tags:['集客力','有名曲','ロマン派','北欧','協奏曲']},
+  {id:'p0792',cmp:'チャイコフスキー',en:'Tchaikovsky',title:'ヴァイオリン協奏曲 ニ長調 Op35',isSym:false,dur:35,yr:1999,con:'第29回定期',tags:['集客力','有名曲','ロマン派','ロシア','協奏曲']},
+  {id:'p0793',cmp:'チャイコフスキー',en:'Tchaikovsky',title:'ピアノ協奏曲第1番 変ロ短調 Op23',isSym:false,dur:33,yr:2018,con:'第13回FC',tags:['集客力','有名曲','ロマン派','ロシア','協奏曲']},
+  {id:'p0795',cmp:'チャイコフスキー',en:'Tchaikovsky',title:'ロココ主題による変奏曲 Op33',isSym:false,dur:18,yr:0,con:'未演奏',tags:['集客力','有名曲','ロマン派','ロシア','協奏曲']},
+  {id:'p0826',cmp:'ヴィエニャフスキ',en:'Wieniawski',title:'ヴァイオリン協奏曲第2番 Op22',isSym:false,dur:18,yr:1992,con:'光り輝くｺﾝﾁｪﾙﾄ',tags:['有名曲','ロマン派','ロシア','協奏曲']},
+  {id:'p0838',cmp:'J.S. バッハ',en:'J.S.Bach',title:'ブランデンブルグ協奏曲第5番 ニ長調 BWV1050',isSym:false,dur:22,yr:0,con:'未演奏',tags:['集客力','有名曲','バロック・古典派','独墺/ハプスブルク','協奏曲']},
+  {id:'p0850',cmp:'バーバー',en:'Barber',title:'弦楽の為のアダージョ',isSym:false,dur:8,yr:0,con:'未演奏',tags:['集客力','有名曲','20世紀以降','英米その他']},
+  {id:'p0853',cmp:'バルトーク',en:'Bartók',title:'バレエ音楽「中国の不思議な役人」',isSym:false,dur:30,yr:0,con:'未演奏',tags:['有名曲','リズミカル','20世紀以降','民族的','ソリスティック']},
+  {id:'p0857',cmp:'バルトーク',en:'Bartók',title:'管弦楽のための協奏曲',isSym:false,dur:37,yr:2018,con:'第64回定期',tags:['集客力','有名曲','リズミカル','20世紀以降','民族的','ソリスティック']},
+  {id:'p0865',cmp:'ベートーヴェン',en:'Beethoven',title:'序曲「レオノーレ」第3番 Op72b',isSym:false,dur:15,yr:0,con:'未演奏',tags:['集客力','有名曲','バロック・古典派','ストーリー性','独墺/ハプスブルク']},
+  {id:'p0866',cmp:'ベートーヴェン',en:'Beethoven',title:'劇音楽「エグモント」Op84 序曲',isSym:false,dur:9,yr:2015,con:'第59回定期',tags:['集客力','有名曲','バロック・古典派','ストーリー性','独墺/ハプスブルク']},
+  {id:'p0891',cmp:'バーンスタイン',en:'Bernstein',title:'シンフォニックダンス (ウエストサイドストーリーより)',isSym:false,dur:21,yr:0,con:'未演奏',tags:['集客力','有名曲','リズミカル','ストーリー性','20世紀以降','英米その他']},
+  {id:'p0894',cmp:'ビゼー',en:'Bizet',title:'「アルルの女」組曲第1番',isSym:false,dur:17,yr:1993,con:'第18回定期',tags:['旋律的','ストーリー性','集客力','有名曲','ロマン派','フランス']},
+  {id:'p0895',cmp:'ビゼー',en:'Bizet',title:'「アルルの女」組曲第2番',isSym:false,dur:18,yr:1993,con:'第18回定期',tags:['旋律的','ストーリー性','集客力','有名曲','ロマン派','フランス']},
+  {id:'p0896',cmp:'ビゼー',en:'Bizet',title:'「カルメン」組曲第1番',isSym:false,dur:11,yr:2023,con:'第17回FC',tags:['旋律的','ストーリー性','集客力','ロマン派','有名曲','フランス']},
+  {id:'p0897',cmp:'ビゼー',en:'Bizet',title:'「カルメン」組曲第2番',isSym:false,dur:19,yr:2023,con:'第17回FC',tags:['旋律的','ストーリー性','集客力','ロマン派','有名曲','フランス']},
+  {id:'p0904',cmp:'ボロディン',en:'Borodin',title:'だったん人の踊り (歌劇「イーゴリ公」より)',isSym:false,dur:11,yr:0,con:'未演奏',tags:['集客力','有名曲','ロマン派','ロシア']},
+  {id:'p0947',cmp:'ドビュッシー',en:'Debussy',title:'3つの交響的スケッチ「海」(交響詩「海」)',isSym:false,dur:24,yr:2010,con:'第49回定期',tags:['ロマン派','集客力','有名曲','フランス','ソリスティック']},
+  {id:'p0949',cmp:'ドビュッシー',en:'Debussy',title:'牧神の午後への前奏曲',isSym:false,dur:10,yr:2014,con:'第57回定期',tags:['有名曲','ロマン派','フランス']},
+  {id:'p0955',cmp:'ドビュッシー',en:'Debussy',title:'組曲「子供の領分」',isSym:false,dur:18,yr:0,con:'未演奏',tags:['有名曲','ロマン派','フランス']},
+  {id:'p0956',cmp:'ドビュッシー',en:'Debussy',title:'夜想曲',isSym:false,dur:25,yr:2016,con:'第60回定期',tags:['有名曲','ロマン派','フランス']},
+  {id:'p0971',cmp:'デュカス',en:'Dukas',title:'魔法使いの弟子',isSym:false,dur:11,yr:2005,con:'第39回定期',tags:['集客力','有名曲','ロマン派','フランス']},
+  {id:'p0974',cmp:'ドヴォルザーク',en:'Dvořák',title:'スラブ舞曲集',isSym:false,dur:40,yr:0,con:'未演奏',tags:['集客力','有名曲','ロマン派','民族的','独墺/ハプスブルク']},
+  {id:'p0988',cmp:'エルガー',en:'Elgar',title:'エニグマ変奏曲 Op36',isSym:false,dur:30,yr:2020,con:'第68回定期',tags:['集客力','有名曲','ロマン派','英米その他','ソリスティック']},
+  {id:'p0994',cmp:'ファリャ',en:'Falla',title:'バレエ音楽「三角帽子」',isSym:false,dur:35,yr:2000,con:'第31回定期',tags:['集客力','有名曲','リズミカル','民族的','ソリスティック']},
+  {id:'p0997',cmp:'フォーレ',en:'Fauré',title:'組曲「ペレアスとメリザンド」 op.80',isSym:false,dur:20,yr:2025,con:'第79回定期',tags:['集客力','有名曲','ロマン派','フランス']},
+  {id:'p1005',cmp:'ガーシュイン',en:'ガーシュイン',title:'パリのアメリカ人',isSym:false,dur:18,yr:0,con:'未演奏',tags:['集客力','有名曲','20世紀以降','英米その他']},
+  {id:'p1006',cmp:'ガーシュイン',en:'ガーシュイン',title:'ラプソディ・イン・ブルー',isSym:false,dur:16,yr:2004,con:'第3回FC',tags:['集客力','有名曲','20世紀以降','英米その他']},
+  {id:'p1025',cmp:'グリーグ',en:'Grieg',title:'「ペールギュント」第1番 Op46',isSym:false,dur:15,yr:2019,con:'第67回定期',tags:['集客力','有名曲','ロマン派','北欧']},
+  {id:'p1026',cmp:'グリーグ',en:'Grieg',title:'「ペールギュント」第2番 Op55',isSym:false,dur:16,yr:2019,con:'第67回定期',tags:['集客力','有名曲','ロマン派','北欧']},
+  {id:'p1030',cmp:'グリーグ',en:'Grieg',title:'ホルベルク組曲 (組曲「ホルベアの時代より」) Op40',isSym:false,dur:20,yr:0,con:'未演奏',tags:['集客力','有名曲','ロマン派','北欧']},
+  {id:'p1033',cmp:'グローフェ',en:'グローフェ',title:'組曲「グランド・キャニオン」',isSym:false,dur:35,yr:0,con:'未演奏',tags:['集客力','有名曲','20世紀以降']},
+  {id:'p1034',cmp:'ヘンデル',en:'Handel',title:'王宮の花火の音楽組曲 HWV351',isSym:false,dur:21,yr:0,con:'未演奏',tags:['集客力','有名曲','バロック・古典派','独墺/ハプスブルク']},
+  {id:'p1035',cmp:'ヘンデル',en:'Handel',title:'王宮の花火の音楽組曲より序曲',isSym:false,dur:8,yr:0,con:'未演奏',tags:['集客力','有名曲','バロック・古典派','ストーリー性','独墺/ハプスブルク']},
+  {id:'p1042',cmp:'ヒンデミット',en:'Hindemith',title:'ウェーバーの主題による交響的変容',isSym:false,dur:18,yr:0,con:'未演奏',tags:['有名曲','20世紀以降','独墺/ハプスブルク']},
+  {id:'p1053',cmp:'久石譲',en:'久石譲',title:'となりのトトロ',isSym:false,dur:35,yr:0,con:'未演奏',tags:['集客力','有名曲','ストーリー性']},
+  {id:'p1054',cmp:'久石譲',en:'久石譲',title:'魔女の宅急便',isSym:false,dur:36,yr:0,con:'未演奏',tags:['集客力','有名曲','ストーリー性']},
+  {id:'p1057',cmp:'ホルスト',en:'ホルスト',title:'組曲「惑星」 Op32',isSym:false,dur:50,yr:2009,con:'第7回FC',tags:['大迫力サウンド','集客力','有名曲','ソリスティック']},
+  {id:'p1062',cmp:'フンパーディンク',en:'フンパーディンク',title:'歌劇「ヘンゼルとグレーテル」前奏曲',isSym:false,dur:8,yr:0,con:'未演奏',tags:['有名曲','ロマン派','独墺/ハプスブルク']},
+  {id:'p1066',cmp:'イベール',en:'Ibert',title:'交響組曲「寄港地」',isSym:false,dur:15,yr:2018,con:'第64回定期',tags:['集客力','有名曲','20世紀以降','フランス']},
+  {id:'p1075',cmp:'イッポリートフ=イヴァノフ',en:'Ippolitov-Ivanov',title:'組曲「コーカサスの風景」 Op10',isSym:false,dur:21,yr:2004,con:'第38回定期',tags:['集客力','有名曲','リズミカル','民族的','集客力']},
+  {id:'p1082',cmp:'カバレフスキー',en:'カバレフスキー',title:'組曲「道化師」 Op26',isSym:false,dur:17,yr:0,con:'未演奏',tags:['有名曲','20世紀以降','ロシア']},
+  {id:'p1083',cmp:'ハチャトゥリアン',en:'Khachaturian',title:'組曲「仮面舞踏会」',isSym:false,dur:15,yr:2008,con:'第46回定期',tags:['有名曲','20世紀以降','ロシア']},
+  {id:'p1084',cmp:'コダーイ',en:'Kodály',title:'組曲「ハーリヤーノシュ」',isSym:false,dur:23,yr:0,con:'未演奏',tags:['有名曲','民族的','ストーリー性','20世紀以降']},
+  {id:'p1085',cmp:'コダーイ',en:'Kodály',title:'ガランタ舞曲',isSym:false,dur:16,yr:0,con:'未演奏',tags:['有名曲','民族的','ストーリー性','20世紀以降']},
+  {id:'p1086',cmp:'コダーイ',en:'Kodály',title:'ハンガリー民謡「飛べよ孔雀」による変奏曲 (孔雀による変奏曲)',isSym:false,dur:23,yr:0,con:'未演奏',tags:['有名曲','民族的','ストーリー性','20世紀以降']},
+  {id:'p1096',cmp:'ランナー',en:'Lanner',title:'ワルツ「宮廷舞踏会」',isSym:false,dur:8,yr:0,con:'未演奏',tags:['有名曲','ロマン派','独墺/ハプスブルク']},
+  {id:'p1126',cmp:'メンデルスゾーン',en:'Mendelssohn',title:'序曲「フィンガルの洞窟」 Op26',isSym:false,dur:10,yr:1979,con:'第5回定期',tags:['集客力','有名曲','ストーリー性','ロマン派','独墺/ハプスブルク']},
+  {id:'p1152',cmp:'W.A. モーツァルト',en:'W.A.Mozart',title:'レクイエム ニ短調 K626',isSym:false,dur:70,yr:0,con:'未演奏',tags:['集客力','有名曲','バロック・古典派']},
+  {id:'p1159',cmp:'ムソルグスキー',en:'Mussorgsky',title:'交響詩「はげ山の一夜」',isSym:false,dur:8,yr:2021,con:'第15回FC',tags:['大迫力サウンド','集客力','ロマン派','有名曲','ロシア','ソリスティック']},
+  {id:'p1160',cmp:'シャブリエ',en:'Chabrier',title:'狂詩曲「スペイン」',isSym:false,dur:6,yr:1995,con:'第21回定期',tags:['リズミカル','ロマン派','民族的','リズミカル','有名曲','集客力','フランス']},
+  {id:'p1161',cmp:'ベートーヴェン',en:'Beethoven',title:'歌劇「フィデリオ」序曲 Op72c',isSym:false,dur:7,yr:1997,con:'第25回定期',tags:['バロック・古典派','有名曲','ストーリー性','独墺/ハプスブルク']},
+  {id:'p1162',cmp:'ショスタコーヴィチ',en:'Shostakovich',title:'祝典序曲 Op96',isSym:false,dur:10,yr:1990,con:'第15回定期',tags:['大迫力サウンド','有名曲','20世紀以降','ロシア']},
+  {id:'p1163',cmp:'ムソルグスキー',en:'Mussorgsky',title:'展覧会の絵(ラヴェル編曲）',isSym:false,dur:8,yr:2017,con:'第12回FC',tags:['大迫力サウンド','集客力','ロマン派','有名曲','ロシア','ソリスティック']}
+,
+  {id:'p0277',cmp:'J.C. バッハ',en:'J.C.Bach',title:'協奏交響曲 イ長調',isSym:true,dur:15,yr:0,con:'未演奏',tags:['バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0278',cmp:'J.C. バッハ',en:'J.C.Bach',title:'協奏交響曲 ハ長調',isSym:true,dur:20,yr:0,con:'未演奏',tags:['バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0279',cmp:'J.C. バッハ',en:'J.C.Bach',title:'協奏交響曲 変ホ長調',isSym:true,dur:23,yr:0,con:'未演奏',tags:['バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0281',cmp:'ベートーヴェン',en:'Beethoven',title:'交響曲第1番 Op21',isSym:true,dur:28,yr:2019,con:'第66回定期',tags:['バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0282',cmp:'ベートーヴェン',en:'Beethoven',title:'交響曲第2番 Op36',isSym:true,dur:35,yr:0,con:'未演奏',tags:['バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0284',cmp:'ベートーヴェン',en:'Beethoven',title:'交響曲第4番 Op60',isSym:true,dur:35,yr:0,con:'未演奏',tags:['バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0288',cmp:'ベートーヴェン',en:'Beethoven',title:'交響曲第8番 Op93',isSym:true,dur:26,yr:2020,con:'第69回定期',tags:['バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0291',cmp:'ベルリオーズ',en:'Berlioz',title:'交響曲「イタリアのハロルド」 Op16',isSym:true,dur:42,yr:0,con:'未演奏',tags:['集客力','ロマン派','フランス','ソリスティック']},
+  {id:'p0292',cmp:'ベルリオーズ',en:'Berlioz',title:'劇的交響曲「ロメオとジュリエット」 Op17',isSym:true,dur:93,yr:0,con:'未演奏',tags:['ロマン派','フランス']},
+  {id:'p0296',cmp:'バーンスタイン',en:'Bernstein',title:'交響曲第1番「エレミア」',isSym:true,dur:26,yr:0,con:'未演奏',tags:['20世紀以降','英米その他']},
+  {id:'p0297',cmp:'バーンスタイン',en:'Bernstein',title:'交響曲第2番「不安の時代」',isSym:true,dur:30,yr:0,con:'未演奏',tags:['20世紀以降','英米その他']},
+  {id:'p0298',cmp:'バーンスタイン',en:'Bernstein',title:'交響曲第3番「カディッシュ」',isSym:true,dur:39,yr:0,con:'未演奏',tags:['20世紀以降','英米その他']},
+  {id:'p0302',cmp:'ビゼー',en:'Bizet',title:'交響曲',isSym:true,dur:25,yr:0,con:'未演奏',tags:['ロマン派','フランス']},
+  {id:'p0303',cmp:'ボロディン',en:'Borodin',title:'交響曲第1番',isSym:true,dur:35,yr:0,con:'未演奏',tags:['ロマン派','ロシア']},
+  {id:'p0305',cmp:'ボロディン',en:'Borodin',title:'交響曲第3番',isSym:true,dur:17,yr:0,con:'未演奏',tags:['ロマン派','ロシア']},
+  {id:'p0309',cmp:'ブラームス',en:'Brahms',title:'交響曲第3番 Op.90',isSym:true,dur:30,yr:2020,con:'第68回定期',tags:['ロマン派','独墺/ハプスブルク','ソリスティック']},
+  {id:'p0311',cmp:'ブリテン',en:'Britten',title:'春の交響曲',isSym:true,dur:45,yr:0,con:'未演奏',tags:['20世紀以降','英米その他']},
+  {id:'p0312',cmp:'ブリテン',en:'Britten',title:'鎮魂交響曲 (シンフォニア・ダ・レクイエム) Op20',isSym:true,dur:20,yr:0,con:'未演奏',tags:['20世紀以降','英米その他']},
+  {id:'p0317',cmp:'ブルックナー',en:'Bruckner',title:'交響曲第0番',isSym:true,dur:43,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0318',cmp:'ブルックナー',en:'Bruckner',title:'交響曲第1番',isSym:true,dur:50,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0319',cmp:'ブルックナー',en:'Bruckner',title:'交響曲第2番',isSym:true,dur:60,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0320',cmp:'ブルックナー',en:'Bruckner',title:'交響曲第3番「ワーグナー」',isSym:true,dur:55,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0322',cmp:'ブルックナー',en:'Bruckner',title:'交響曲第5番',isSym:true,dur:80,yr:2022,con:'第72回定期',tags:['ロマン派','独墺/ハプスブルク','ソリスティック']},
+  {id:'p0323',cmp:'ブルックナー',en:'Bruckner',title:'交響曲第6番',isSym:true,dur:55,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0327',cmp:'ショーソン',en:'Chausson',title:'交響曲 変ロ長調 Op20',isSym:true,dur:34,yr:0,con:'未演奏',tags:['ロマン派']},
+  {id:'p0331',cmp:'デュカス',en:'Dukas',title:'交響曲 ハ長調',isSym:true,dur:40,yr:0,con:'未演奏',tags:['ロマン派','フランス']},
+  {id:'p0332',cmp:'ドヴォルザーク',en:'Dvořák',title:'交響曲第1番「ズロニツの鐘」( Op3)',isSym:true,dur:50,yr:0,con:'未演奏',tags:['ロマン派','民族的','独墺/ハプスブルク']},
+  {id:'p0333',cmp:'ドヴォルザーク',en:'Dvořák',title:'交響曲第2番 Op4',isSym:true,dur:50,yr:0,con:'未演奏',tags:['ロマン派','民族的','独墺/ハプスブルク']},
+  {id:'p0334',cmp:'ドヴォルザーク',en:'Dvořák',title:'交響曲第3番 Op10',isSym:true,dur:35,yr:0,con:'未演奏',tags:['ロマン派','民族的','独墺/ハプスブルク']},
+  {id:'p0335',cmp:'ドヴォルザーク',en:'Dvořák',title:'交響曲第4番 Op13',isSym:true,dur:45,yr:0,con:'未演奏',tags:['ロマン派','民族的','独墺/ハプスブルク']},
+  {id:'p0336',cmp:'ドヴォルザーク',en:'Dvořák',title:'交響曲第5番 Op76(Op24)',isSym:true,dur:39,yr:0,con:'未演奏',tags:['ロマン派','民族的','独墺/ハプスブルク']},
+  {id:'p0337',cmp:'ドヴォルザーク',en:'Dvořák',title:'交響曲第6番 Op60(Op58)',isSym:true,dur:43,yr:0,con:'未演奏',tags:['ロマン派','民族的','独墺/ハプスブルク']},
+  {id:'p0338',cmp:'ドヴォルザーク',en:'Dvořák',title:'交響曲第7番 Op70',isSym:true,dur:38,yr:2013,con:'第54回定期',tags:['ロマン派','民族的','独墺/ハプスブルク','ソリスティック']},
+  {id:'p0339',cmp:'ドヴォルザーク',en:'Dvořák',title:'交響曲第8番 Op88',isSym:true,dur:38,yr:1980,con:'第6回定期',tags:['ロマン派','民族的','独墺/ハプスブルク','ソリスティック']},
+  {id:'p0342',cmp:'エルガー',en:'Elgar',title:'交響曲第1番 Op.55',isSym:true,dur:43,yr:0,con:'未演奏',tags:['ロマン派','英米その他']},
+  {id:'p0343',cmp:'エルガー',en:'Elgar',title:'交響曲第2番 Op.63',isSym:true,dur:51,yr:0,con:'未演奏',tags:['ロマン派','英米その他']},
+  {id:'p0344',cmp:'フランク',en:'Franck',title:'交響曲',isSym:true,dur:40,yr:2005,con:'第39回定期',tags:['ロマン派','フランス']},
+  {id:'p0347',cmp:'グラズノフ',en:'Glazunov',title:'交響曲第1番「スラブ」 Op5',isSym:true,dur:40,yr:0,con:'未演奏',tags:['ロマン派','ロシア']},
+  {id:'p0348',cmp:'グラズノフ',en:'Glazunov',title:'交響曲第2番 Op16',isSym:true,dur:45,yr:0,con:'未演奏',tags:['ロマン派','ロシア']},
+  {id:'p0349',cmp:'グラズノフ',en:'Glazunov',title:'交響曲第4番 Op48',isSym:true,dur:30,yr:0,con:'未演奏',tags:['ロマン派','ロシア']},
+  {id:'p0350',cmp:'グリーグ',en:'Grieg',title:'交響曲 ハ短調',isSym:true,dur:30,yr:0,con:'未演奏',tags:['ロマン派','北欧']},
+  {id:'p0380',cmp:'ハイドン',en:'Haydn',title:'交響曲第31番「ホルン信号」',isSym:true,dur:28,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0393',cmp:'ハイドン',en:'Haydn',title:'交響曲第45番「告別」',isSym:true,dur:25,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0402',cmp:'ハイドン',en:'Haydn',title:'交響曲第54番',isSym:true,dur:34,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0404',cmp:'ハイドン',en:'Haydn',title:'交響曲第56番',isSym:true,dur:28,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0408',cmp:'ハイドン',en:'Haydn',title:'交響曲第60番「うすのろ」',isSym:true,dur:28,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0409',cmp:'ハイドン',en:'Haydn',title:'交響曲第61番',isSym:true,dur:26,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0415',cmp:'ハイドン',en:'Haydn',title:'交響曲第67番',isSym:true,dur:25,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0420',cmp:'ハイドン',en:'Haydn',title:'交響曲第72番',isSym:true,dur:26,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0421',cmp:'ハイドン',en:'Haydn',title:'交響曲第73番「狩」',isSym:true,dur:21,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0431',cmp:'ハイドン',en:'Haydn',title:'交響曲第83番「めんどり」',isSym:true,dur:22,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0433',cmp:'ハイドン',en:'Haydn',title:'交響曲第86番',isSym:true,dur:26,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0434',cmp:'ハイドン',en:'Haydn',title:'交響曲第88番「V字」',isSym:true,dur:25,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0437',cmp:'ハイドン',en:'Haydn',title:'交響曲第91番',isSym:true,dur:26,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0438',cmp:'ハイドン',en:'Haydn',title:'交響曲第92番「オックスフォード」',isSym:true,dur:27,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0439',cmp:'ハイドン',en:'Haydn',title:'交響曲第93番',isSym:true,dur:26,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0440',cmp:'ハイドン',en:'Haydn',title:'交響曲第94番「驚愕」',isSym:true,dur:25,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0441',cmp:'ハイドン',en:'Haydn',title:'交響曲第95番',isSym:true,dur:25,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0442',cmp:'ハイドン',en:'Haydn',title:'交響曲第96番「奇跡」',isSym:true,dur:25,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0443',cmp:'ハイドン',en:'Haydn',title:'交響曲第97番',isSym:true,dur:26,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0444',cmp:'ハイドン',en:'Haydn',title:'交響曲第98番',isSym:true,dur:30,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0445',cmp:'ハイドン',en:'Haydn',title:'交響曲第99番',isSym:true,dur:29,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0446',cmp:'ハイドン',en:'Haydn',title:'交響曲第100番「軍隊」',isSym:true,dur:28,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0447',cmp:'ハイドン',en:'Haydn',title:'交響曲第101番「時計」',isSym:true,dur:30,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0448',cmp:'ハイドン',en:'Haydn',title:'交響曲第102番',isSym:true,dur:26,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0449',cmp:'ハイドン',en:'Haydn',title:'交響曲第103番「太鼓連打」',isSym:true,dur:30,yr:0,con:'未演奏',tags:['バロック・古典派']},
+  {id:'p0450',cmp:'ハイドン',en:'Haydn',title:'交響曲第104番「ロンドン」',isSym:true,dur:29,yr:2011,con:'第50回定期',tags:['バロック・古典派']},
+  {id:'p0459',cmp:'ヒンデミット',en:'Hindemith',title:'交響曲「画家マチス」',isSym:true,dur:26,yr:2013,con:'第55回定期',tags:['20世紀以降','独墺/ハプスブルク','ソリスティック']},
+  {id:'p0460',cmp:'ヒンデミット',en:'Hindemith',title:'交響曲 変ホ調',isSym:true,dur:36,yr:0,con:'未演奏',tags:['20世紀以降','独墺/ハプスブルク']},
+  {id:'p0461',cmp:'ヒンデミット',en:'Hindemith',title:'交響曲「世界の調和」',isSym:true,dur:33,yr:0,con:'未演奏',tags:['20世紀以降','独墺/ハプスブルク']},
+  {id:'p0462',cmp:'オネゲル',en:'Honegger',title:'交響曲第1番',isSym:true,dur:22,yr:0,con:'未演奏',tags:['20世紀以降','フランス']},
+  {id:'p0463',cmp:'オネゲル',en:'Honegger',title:'交響曲第2番',isSym:true,dur:25,yr:0,con:'未演奏',tags:['20世紀以降','フランス']},
+  {id:'p0464',cmp:'オネゲル',en:'Honegger',title:'交響曲第3番「礼拝」',isSym:true,dur:30,yr:0,con:'未演奏',tags:['20世紀以降','フランス']},
+  {id:'p0465',cmp:'オネゲル',en:'Honegger',title:'交響曲第4番「バジリアの喜び」',isSym:true,dur:32,yr:0,con:'未演奏',tags:['20世紀以降','フランス']},
+  {id:'p0466',cmp:'オネゲル',en:'Honegger',title:'交響曲第5番「三つのレ」',isSym:true,dur:25,yr:0,con:'未演奏',tags:['20世紀以降','フランス']},
+  {id:'p0471',cmp:'アイヴズ',en:'Ives',title:'交響曲第1番',isSym:true,dur:40,yr:0,con:'未演奏',tags:['20世紀以降','英米その他']},
+  {id:'p0472',cmp:'アイヴズ',en:'Ives',title:'交響曲第2番',isSym:true,dur:40,yr:0,con:'未演奏',tags:['20世紀以降','英米その他']},
+  {id:'p0473',cmp:'アイヴズ',en:'Ives',title:'交響曲第3番「キャンプの集い」',isSym:true,dur:20,yr:0,con:'未演奏',tags:['20世紀以降','英米その他']},
+  {id:'p0474',cmp:'アイヴズ',en:'Ives',title:'交響曲第4番',isSym:true,dur:30,yr:0,con:'未演奏',tags:['20世紀以降','英米その他']},
+  {id:'p0477',cmp:'カリンニコフ',en:'Kalinnikov',title:'交響曲第1番',isSym:true,dur:40,yr:0,con:'未演奏',tags:['ロマン派','ロシア','ソリスティック']},
+  {id:'p0478',cmp:'カリンニコフ',en:'Kalinnikov',title:'交響曲第2番',isSym:true,dur:40,yr:0,con:'未演奏',tags:['ロマン派','ロシア']},
+  {id:'p0479',cmp:'ハチャトゥリアン',en:'Khachaturian',title:'交響曲第2番「鐘」Op56',isSym:true,dur:50,yr:0,con:'未演奏',tags:['20世紀以降','ロシア']},
+  {id:'p0481',cmp:'リスト',en:'Liszt',title:'ダンテ交響曲 S.109',isSym:true,dur:45,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0482',cmp:'リスト',en:'Liszt',title:'ファウスト交響曲 S.108',isSym:true,dur:80,yr:0,con:'未演奏',tags:['ストーリー性','ロマン派','独墺/ハプスブルク']},
+  {id:'p0486',cmp:'マーラー',en:'Mahler',title:'交響曲第3番',isSym:true,dur:100,yr:2014,con:'第56回定期',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0487',cmp:'マーラー',en:'Mahler',title:'交響曲第4番',isSym:true,dur:55,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0489',cmp:'マーラー',en:'Mahler',title:'交響曲第6番「悲劇的」',isSym:true,dur:80,yr:2021,con:'第70回定期',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0490',cmp:'マーラー',en:'Mahler',title:'交響曲第7番「夜の歌」',isSym:true,dur:80,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0491',cmp:'マーラー',en:'Mahler',title:'交響曲第8番「千人の交響曲」',isSym:true,dur:80,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0493',cmp:'マーラー',en:'Mahler',title:'交響曲第10番よりアダージョ',isSym:true,dur:25,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0494',cmp:'マーラー',en:'Mahler',title:'交響曲第10番 (D.クックによる補筆完成版)',isSym:true,dur:75,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0499',cmp:'メンデルスゾーン',en:'Mendelssohn',title:'交響曲第1番 Op11',isSym:true,dur:30,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0500',cmp:'メンデルスゾーン',en:'Mendelssohn',title:'交響曲第2番「讃歌」Op52',isSym:true,dur:70,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0501',cmp:'メンデルスゾーン',en:'Mendelssohn',title:'交響曲第3番「スコットランド」 Op56',isSym:true,dur:40,yr:2006,con:'第41回定期',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0503',cmp:'メンデルスゾーン',en:'Mendelssohn',title:'交響曲第5番「宗教改革」 Op107',isSym:true,dur:30,yr:2020,con:'第69回定期',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0509',cmp:'L. モーツァルト',en:'L.Mozart',title:'おもちゃの交響曲',isSym:true,dur:11,yr:0,con:'未演奏',tags:['バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0517',cmp:'W.A. モーツァルト',en:'W.A.Mozart',title:'交響曲第19番 K132',isSym:true,dur:20,yr:0,con:'未演奏',tags:['バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0521',cmp:'W.A. モーツァルト',en:'W.A.Mozart',title:'交響曲第26番 K184(161a)',isSym:true,dur:9,yr:0,con:'未演奏',tags:['バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0522',cmp:'W.A. モーツァルト',en:'W.A.Mozart',title:'交響曲第27番 K199(161b)',isSym:true,dur:15,yr:0,con:'未演奏',tags:['バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0523',cmp:'W.A. モーツァルト',en:'W.A.Mozart',title:'交響曲第28番 K200(189k)',isSym:true,dur:25,yr:0,con:'未演奏',tags:['バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0524',cmp:'W.A. モーツァルト',en:'W.A.Mozart',title:'交響曲第29番 K201(186a)',isSym:true,dur:27,yr:0,con:'未演奏',tags:['バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0525',cmp:'W.A. モーツァルト',en:'W.A.Mozart',title:'交響曲第30番 K202(186b)',isSym:true,dur:18,yr:0,con:'未演奏',tags:['バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0526',cmp:'W.A. モーツァルト',en:'W.A.Mozart',title:'交響曲第31番「パリ」 K297(300a)',isSym:true,dur:20,yr:2026,con:'第80回定期',tags:['バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0527',cmp:'W.A. モーツァルト',en:'W.A.Mozart',title:'交響曲第32番 K318',isSym:true,dur:8,yr:0,con:'未演奏',tags:['バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0528',cmp:'W.A. モーツァルト',en:'W.A.Mozart',title:'交響曲第33番 K319',isSym:true,dur:22,yr:0,con:'未演奏',tags:['バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0529',cmp:'W.A. モーツァルト',en:'W.A.Mozart',title:'交響曲第34番 K338',isSym:true,dur:20,yr:0,con:'未演奏',tags:['バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0531',cmp:'W.A. モーツァルト',en:'W.A.Mozart',title:'交響曲第36番「リンツ」 K425',isSym:true,dur:26,yr:1997,con:'第26回定期',tags:['バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0532',cmp:'W.A. モーツァルト',en:'W.A.Mozart',title:'交響曲第38番「プラハ」 K504',isSym:true,dur:25,yr:0,con:'未演奏',tags:['バロック・古典派','独墺/ハプスブルク']},
+  {id:'p0540',cmp:'ニールセン',en:'Nielsen',title:'交響曲第1番 FS16(Op.7)',isSym:true,dur:27,yr:0,con:'未演奏',tags:['20世紀以降','北欧']},
+  {id:'p0541',cmp:'ニールセン',en:'Nielsen',title:'交響曲第2番「4つの気質」 FS29(Op.16)',isSym:true,dur:28,yr:0,con:'未演奏',tags:['20世紀以降','北欧']},
+  {id:'p0542',cmp:'ニールセン',en:'Nielsen',title:'交響曲第3番「ひろがり」 FS60(Op.27)',isSym:true,dur:36,yr:0,con:'未演奏',tags:['20世紀以降','北欧']},
+  {id:'p0544',cmp:'ニールセン',en:'Nielsen',title:'交響曲第5番 FS97(Op.50)',isSym:true,dur:40,yr:0,con:'未演奏',tags:['20世紀以降','北欧']},
+  {id:'p0545',cmp:'ニールセン',en:'Nielsen',title:'交響曲第6番「シンフォニア・センプリーチェ」FS116',isSym:true,dur:35,yr:0,con:'未演奏',tags:['20世紀以降','北欧']},
+  {id:'p0547',cmp:'プロコフィエフ',en:'Prokofiev',title:'交響曲第2番',isSym:true,dur:33,yr:0,con:'未演奏',tags:['20世紀以降','ロシア']},
+  {id:'p0548',cmp:'プロコフィエフ',en:'Prokofiev',title:'交響曲第3番 Op44',isSym:true,dur:33,yr:0,con:'未演奏',tags:['20世紀以降','ロシア']},
+  {id:'p0549',cmp:'プロコフィエフ',en:'Prokofiev',title:'交響曲第4番',isSym:true,dur:25,yr:0,con:'未演奏',tags:['20世紀以降','ロシア']},
+  {id:'p0551',cmp:'プロコフィエフ',en:'Prokofiev',title:'交響曲第6番 Op111',isSym:true,dur:43,yr:0,con:'未演奏',tags:['20世紀以降','ロシア']},
+  {id:'p0552',cmp:'プロコフィエフ',en:'Prokofiev',title:'交響曲第7番 Op131',isSym:true,dur:32,yr:0,con:'未演奏',tags:['20世紀以降','ロシア']},
+  {id:'p0553',cmp:'ラフマニノフ',en:'Rachmaninoff',title:'交響曲第1番 Op13',isSym:true,dur:45,yr:0,con:'未演奏',tags:['ロマン派','ロシア']},
+  {id:'p0555',cmp:'ラフマニノフ',en:'Rachmaninoff',title:'交響曲第3番 Op44',isSym:true,dur:37,yr:2022,con:'第73回定期',tags:['ロマン派','ロシア']},
+  {id:'p0559',cmp:'リムスキー=コルサコフ',en:'Rimsky-Korsakov',title:'交響曲第2番「アンタール」 Op9',isSym:true,dur:25,yr:0,con:'未演奏',tags:['ロマン派','ロシア']},
+  {id:'p0563',cmp:'サン=サーンス',en:'Saint-Saëns',title:'交響曲第1番 Op2',isSym:true,dur:30,yr:0,con:'未演奏',tags:['ロマン派','フランス']},
+  {id:'p0564',cmp:'サン=サーンス',en:'Saint-Saëns',title:'交響曲第2番 Op55',isSym:true,dur:24,yr:0,con:'未演奏',tags:['ロマン派','フランス']},
+  {id:'p0567',cmp:'シェーンベルク',en:'Schoenberg',title:'室内交響曲第1番 Op9',isSym:true,dur:22,yr:0,con:'未演奏',tags:['20世紀以降']},
+  {id:'p0568',cmp:'シェーンベルク',en:'Schoenberg',title:'室内交響曲第2番 Op38a',isSym:true,dur:20,yr:0,con:'未演奏',tags:['20世紀以降']},
+  {id:'p0569',cmp:'シューベルト',en:'Schubert',title:'交響曲第1番 D.82',isSym:true,dur:30,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0570',cmp:'シューベルト',en:'Schubert',title:'交響曲第2番 D.125',isSym:true,dur:30,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0571',cmp:'シューベルト',en:'Schubert',title:'交響曲第3番 D.200',isSym:true,dur:25,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0572',cmp:'シューベルト',en:'Schubert',title:'交響曲第4番「悲劇的」 D.417',isSym:true,dur:30,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0573',cmp:'シューベルト',en:'Schubert',title:'交響曲第5番 D.485',isSym:true,dur:28,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0574',cmp:'シューベルト',en:'Schubert',title:'交響曲第6番 D.589',isSym:true,dur:30,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0576',cmp:'シューベルト',en:'Schubert',title:'交響曲第8番(9)番「ザ・グレート」 D.944',isSym:true,dur:50,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0577',cmp:'シューマン',en:'Schumann',title:'交響曲第1番「春」 Op38',isSym:true,dur:35,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0578',cmp:'シューマン',en:'Schumann',title:'交響曲第2番 Op61',isSym:true,dur:40,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0579',cmp:'シューマン',en:'Schumann',title:'交響曲第3番「ライン」 Op97',isSym:true,dur:25,yr:2019,con:'第67回定期',tags:['ロマン派','独墺/ハプスブルク','ソリスティック']},
+  {id:'p0580',cmp:'シューマン',en:'Schumann',title:'交響曲第4番 Op120',isSym:true,dur:30,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0581',cmp:'シューマン',en:'Schumann',title:'交響曲 ト短調(ツヴィッカウ交響曲)',isSym:true,dur:20,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0582',cmp:'スクリャービン',en:'Scriabin',title:'交響曲第3番「神聖な詩」 Op43',isSym:true,dur:50,yr:0,con:'未演奏',tags:['ロマン派','ロシア']},
+  {id:'p0583',cmp:'スクリャービン',en:'Scriabin',title:'交響曲第4番「法悦の詩」 Op54',isSym:true,dur:19,yr:0,con:'未演奏',tags:['ロマン派','ロシア']},
+  {id:'p0584',cmp:'スクリャービン',en:'Scriabin',title:'交響曲第5番「プロメテウス」Op60',isSym:true,dur:29,yr:0,con:'未演奏',tags:['ロマン派','ロシア']},
+  {id:'p0585',cmp:'ショスタコーヴィチ',en:'Shostakovich',title:'交響曲第1番 Op10',isSym:true,dur:30,yr:0,con:'未演奏',tags:['20世紀以降','ロシア','ソリスティック']},
+  {id:'p0586',cmp:'ショスタコーヴィチ',en:'Shostakovich',title:'交響曲第2番「10月革命」 Op14',isSym:true,dur:17,yr:0,con:'未演奏',tags:['20世紀以降','ロシア']},
+  {id:'p0587',cmp:'ショスタコーヴィチ',en:'Shostakovich',title:'交響曲第3番「メーデー」 Op20',isSym:true,dur:26,yr:0,con:'未演奏',tags:['20世紀以降','ロシア']},
+  {id:'p0588',cmp:'ショスタコーヴィチ',en:'Shostakovich',title:'交響曲第4番 Op43',isSym:true,dur:60,yr:0,con:'未演奏',tags:['20世紀以降','ロシア']},
+  {id:'p0590',cmp:'ショスタコーヴィチ',en:'Shostakovich',title:'交響曲第6番 Op54',isSym:true,dur:32,yr:0,con:'未演奏',tags:['20世紀以降','ロシア']},
+  {id:'p0592',cmp:'ショスタコーヴィチ',en:'Shostakovich',title:'交響曲第8番 Op65',isSym:true,dur:60,yr:0,con:'未演奏',tags:['20世紀以降','ロシア']},
+  {id:'p0593',cmp:'ショスタコーヴィチ',en:'Shostakovich',title:'交響曲第9番 Op70',isSym:true,dur:25,yr:2022,con:'第72回定期',tags:['20世紀以降','ロシア']},
+  {id:'p0595',cmp:'ショスタコーヴィチ',en:'Shostakovich',title:'交響曲第11番「1905年」 Op103',isSym:true,dur:58,yr:0,con:'未演奏',tags:['20世紀以降','ロシア']},
+  {id:'p0596',cmp:'ショスタコーヴィチ',en:'Shostakovich',title:'交響曲第12番「1917年」 Op112',isSym:true,dur:35,yr:0,con:'未演奏',tags:['20世紀以降','ロシア']},
+  {id:'p0597',cmp:'ショスタコーヴィチ',en:'Shostakovich',title:'交響曲第13番「バービ・ヤール」Op113',isSym:true,dur:55,yr:0,con:'未演奏',tags:['20世紀以降','ロシア']},
+  {id:'p0598',cmp:'ショスタコーヴィチ',en:'Shostakovich',title:'交響曲第14番「死者の歌」Op135',isSym:true,dur:48,yr:0,con:'未演奏',tags:['20世紀以降','ロシア']},
+  {id:'p0599',cmp:'ショスタコーヴィチ',en:'Shostakovich',title:'交響曲第15番 Op141',isSym:true,dur:40,yr:0,con:'未演奏',tags:['20世紀以降','ロシア']},
+  {id:'p0600',cmp:'シベリウス',en:'Sibelius',title:'クレルヴォ交響曲 Op7',isSym:true,dur:73,yr:0,con:'未演奏',tags:['民族的','ロマン派','北欧']},
+  {id:'p0601',cmp:'シベリウス',en:'Sibelius',title:'交響曲第1番 Op39',isSym:true,dur:40,yr:2014,con:'第57回定期',tags:['ロマン派','北欧','ソリスティック']},
+  {id:'p0603',cmp:'シベリウス',en:'Sibelius',title:'交響曲第3番 Op52',isSym:true,dur:27,yr:0,con:'未演奏',tags:['ロマン派','北欧']},
+  {id:'p0604',cmp:'シベリウス',en:'Sibelius',title:'交響曲第4番 Op63',isSym:true,dur:32,yr:0,con:'未演奏',tags:['ロマン派','北欧']},
+  {id:'p0605',cmp:'シベリウス',en:'Sibelius',title:'交響曲第5番 Op82',isSym:true,dur:30,yr:2024,con:'第76回定期',tags:['ロマン派','北欧']},
+  {id:'p0606',cmp:'シベリウス',en:'Sibelius',title:'交響曲第6番 Op104',isSym:true,dur:28,yr:0,con:'未演奏',tags:['ロマン派','北欧']},
+  {id:'p0607',cmp:'シベリウス',en:'Sibelius',title:'交響曲第7番 Op105',isSym:true,dur:22,yr:0,con:'未演奏',tags:['ロマン派','北欧']},
+  {id:'p0612',cmp:'R. シュトラウス',en:'R.Strauss',title:'家庭交響曲 Op53',isSym:true,dur:45,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0613',cmp:'ストラヴィンスキー',en:'Stravinsky',title:'管楽器のためのサンフォニー (ドビュッシーの思い出のため)',isSym:true,dur:12,yr:0,con:'未演奏',tags:['20世紀以降','ロシア']},
+  {id:'p0614',cmp:'ストラヴィンスキー',en:'Stravinsky',title:'交響曲ハ調',isSym:true,dur:28,yr:0,con:'未演奏',tags:['20世紀以降','ロシア']},
+  {id:'p0615',cmp:'ストラヴィンスキー',en:'Stravinsky',title:'三楽章の交響曲',isSym:true,dur:24,yr:0,con:'未演奏',tags:['20世紀以降','ロシア']},
+  {id:'p0616',cmp:'ストラヴィンスキー',en:'Stravinsky',title:'詩篇交響曲',isSym:true,dur:23,yr:0,con:'未演奏',tags:['20世紀以降','ロシア']},
+  {id:'p0617',cmp:'チャイコフスキー',en:'Tchaikovsky',title:'交響曲第1番「冬の日の幻想」Op13',isSym:true,dur:40,yr:2025,con:'第78回定期',tags:['ロマン派','ロシア']},
+  {id:'p0618',cmp:'チャイコフスキー',en:'Tchaikovsky',title:'交響曲第2番「小ロシア」 Op17',isSym:true,dur:35,yr:0,con:'未演奏',tags:['ロマン派','ロシア']},
+  {id:'p0619',cmp:'チャイコフスキー',en:'Tchaikovsky',title:'交響曲第3番「ポーランド」 Op29',isSym:true,dur:45,yr:0,con:'未演奏',tags:['民族的','ロマン派','ロシア']},
+  {id:'p0624',cmp:'チャイコフスキー',en:'Tchaikovsky',title:'マンフレッド交響曲',isSym:true,dur:60,yr:2001,con:'第33回定期',tags:['ストーリー性','ロマン派','ロシア']},
+  {id:'p0626',cmp:'ヴォーン・ウィリアムズ',en:'Vaughan Williams',title:'交響曲第1番「海の交響曲」',isSym:true,dur:75,yr:0,con:'未演奏',tags:['ロマン派','英米その他']},
+  {id:'p0627',cmp:'ヴォーン・ウィリアムズ',en:'Vaughan Williams',title:'交響曲第2番「ロンドン交響曲」',isSym:true,dur:45,yr:0,con:'未演奏',tags:['ロマン派','英米その他']},
+  {id:'p0628',cmp:'ヴォーン・ウィリアムズ',en:'Vaughan Williams',title:'交響曲第3番「田園交響曲」',isSym:true,dur:38,yr:0,con:'未演奏',tags:['ロマン派','英米その他']},
+  {id:'p0629',cmp:'ヴォーン・ウィリアムズ',en:'Vaughan Williams',title:'交響曲第4番',isSym:true,dur:35,yr:0,con:'未演奏',tags:['ロマン派','英米その他']},
+  {id:'p0630',cmp:'ヴォーン・ウィリアムズ',en:'Vaughan Williams',title:'交響曲第5番',isSym:true,dur:38,yr:0,con:'未演奏',tags:['ロマン派','英米その他']},
+  {id:'p0631',cmp:'ヴォーン・ウィリアムズ',en:'Vaughan Williams',title:'交響曲第6番',isSym:true,dur:34,yr:0,con:'未演奏',tags:['ロマン派','英米その他']},
+  {id:'p0632',cmp:'ヴォーン・ウィリアムズ',en:'Vaughan Williams',title:'交響曲第7番「南極交響曲」',isSym:true,dur:40,yr:0,con:'未演奏',tags:['ロマン派','英米その他']},
+  {id:'p0633',cmp:'ヴォーン・ウィリアムズ',en:'Vaughan Williams',title:'交響曲第8番',isSym:true,dur:30,yr:0,con:'未演奏',tags:['ロマン派','英米その他']},
+  {id:'p0634',cmp:'ヴォーン・ウィリアムズ',en:'Vaughan Williams',title:'交響曲第9番',isSym:true,dur:30,yr:0,con:'未演奏',tags:['ロマン派','英米その他']},
+  {id:'p0635',cmp:'ワーグナー',en:'Wagner',title:'交響曲',isSym:true,dur:42,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0636',cmp:'ウェーバー',en:'Weber',title:'交響曲第1番 Op.19 J.50',isSym:true,dur:25,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0637',cmp:'ウェーバー',en:'Weber',title:'交響曲第2番 J.51',isSym:true,dur:21,yr:0,con:'未演奏',tags:['ロマン派','独墺/ハプスブルク']},
+  {id:'p0638',cmp:'ヴェーベルン',en:'Webern',title:'交響曲 Op.21',isSym:true,dur:10,yr:0,con:'未演奏',tags:['20世紀以降','独墺/ハプスブルク']},
+  {id:'p0639',cmp:'ワイル',en:'Weil',title:'交響曲第2番',isSym:true,dur:30,yr:0,con:'未演奏',tags:['20世紀以降','独墺/ハプスブルク']}
+];
+
+const PRESETS = {
+  'p0000':['audience_impactful','body_dance','audience_immersive','era_early_romantic','era_late_romantic','freq_well_known','brand_narrative','audience_storytelling','concept_memory','region_germany_austria','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0003':['freq_well_known','audience_impactful','body_dance','audience_immersive','brand_narrative','audience_storytelling','concept_memory','era_early_romantic','era_late_romantic','region_france','inst_trombone','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0021':['freq_well_known','brand_narrative','audience_storytelling','concept_memory','body_flow','audience_atmospheric','audience_moving','era_20th_century','region_russia','inst_harp','inst_piano','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb2 tub1'],
+  'p0022':['freq_well_known','brand_narrative','audience_storytelling','concept_memory','body_flow','audience_atmospheric','audience_moving','era_20th_century','region_russia','inst_harp','inst_celesta','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 trb2 tub1'],
+  'p0024':['freq_well_known','era_20th_century','region_russia','performer_solo_satisfaction','inst_trombone','inst_perc_up_to_3','fl1 ob1 cl1 fg1 hr3 tp1 trb1'],
+  'p0030':['freq_well_known','audience_impactful','body_dance','audience_immersive','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','time_history','era_20th_century','region_france','performer_solo_satisfaction','inst_triple_wind','inst_harp','inst_celesta','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg3 hr4 tp3 trb3 tub1'],
+  'p0032':['brand_high_energy','audience_overwhelming','performer_brass_fun','audience_impactful','body_dance','audience_immersive','era_20th_century','freq_well_known','region_france','inst_triple_wind','inst_harp','inst_celesta','inst_trombone','inst_tuba','inst_chorus','inst_perc_4_or_more','fl2 ob2 cl2 fg3 hr4 tp4 trb3 tub1'],
+  'p0033':['audience_impactful','body_dance','audience_immersive','era_20th_century','freq_well_known','region_france','performer_solo_satisfaction','inst_harp','inst_celesta','inst_trombone','inst_tuba','inst_vocal_solo','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0036':['brand_high_energy','audience_overwhelming','performer_brass_fun','audience_impactful','body_dance','audience_immersive','era_20th_century','freq_well_known','region_france','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_perc_4_or_more','fl3 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0042':['brand_high_energy','audience_overwhelming','performer_brass_fun','audience_impactful','body_dance','audience_immersive','era_20th_century','freq_well_known','performer_solo_satisfaction','inst_triple_wind','inst_trombone','inst_tuba','inst_perc_4_or_more','fl3 ob2 cl2 fg2 hr4 tp4 trb3 tub1'],
+  'p0043':['brand_high_energy','audience_overwhelming','performer_brass_fun','era_20th_century','freq_well_known','performer_solo_satisfaction','inst_triple_wind','inst_harp','inst_celesta','inst_piano','inst_organ','inst_trombone','inst_perc_4_or_more','fl3 ob2 cl2 fg2 hr4 tp3 trb4'],
+  'p0053':['audience_impactful','body_dance','audience_immersive','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','time_history','era_early_romantic','era_late_romantic','freq_well_known','region_russia','inst_harp','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0054':['freq_well_known','era_early_romantic','era_late_romantic','region_russia','inst_harp','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0058':['brand_narrative','audience_storytelling','concept_memory','era_early_romantic','era_late_romantic','freq_well_known','performer_solo_satisfaction','inst_trombone','inst_perc_up_to_3','fl1 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0059':['brand_narrative','audience_storytelling','concept_memory','era_early_romantic','era_late_romantic','freq_well_known','performer_solo_satisfaction','inst_trombone','inst_perc_up_to_3','fl1 ob2 cl2 fg2 hr2 tp2 trb3'],
+  'p0064':['brand_narrative','audience_storytelling','concept_memory','era_early_romantic','era_late_romantic','freq_well_known','inst_trombone','inst_tuba','inst_perc_4_or_more','fl1 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0071':['freq_well_known','era_early_romantic','era_late_romantic','region_france','inst_celesta','inst_perc_up_to_3','fl1 cl1'],
+  'p0088':['brand_narrative','audience_storytelling','concept_memory','era_early_romantic','era_late_romantic','freq_well_known','region_germany_austria','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p0089':['brand_narrative','audience_storytelling','concept_memory','era_early_romantic','era_late_romantic','freq_well_known','region_germany_austria','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p0109':['brand_high_energy','audience_overwhelming','performer_brass_fun','freq_well_known','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','time_history','brand_narrative','audience_storytelling','concept_memory','era_early_romantic','era_late_romantic','region_nordic','performer_solo_satisfaction','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0120':['emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','time_history','era_early_romantic','era_late_romantic','freq_well_known','region_nordic','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0125':['freq_well_known','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','time_history','brand_narrative','audience_storytelling','concept_memory','era_early_romantic','era_late_romantic','performer_solo_satisfaction','inst_harp','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0141':['audience_impactful','body_dance','audience_immersive','freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','inst_harp','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0142':['audience_impactful','body_dance','audience_immersive','freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','performer_solo_satisfaction','inst_harp','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp2 trb1 tub1'],
+  'p0148':['brand_high_energy','audience_overwhelming','performer_brass_fun','freq_well_known','brand_narrative','audience_storytelling','concept_memory','era_early_romantic','era_late_romantic','region_germany_austria','performer_solo_satisfaction','inst_triple_wind','inst_harp','inst_organ','inst_trombone','inst_tuba','inst_perc_4_or_more','fl3 ob3 cl2 fg3 hr6 tp4 trb3 tub2'],
+  'p0149':['freq_well_known','brand_narrative','audience_storytelling','concept_memory','era_early_romantic','era_late_romantic','region_germany_austria','performer_solo_satisfaction','inst_triple_wind','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob3 cl2 fg3 hr4 tp3 trb3 tub1'],
+  'p0153':['brand_high_energy','audience_overwhelming','performer_brass_fun','freq_well_known','brand_narrative','audience_storytelling','concept_memory','era_early_romantic','era_late_romantic','region_germany_austria','performer_solo_satisfaction','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_quadruple_wind','inst_perc_up_to_3','fl3 ob4 cl2 fg3 hr8 tp5 trb3 tub2'],
+  'p0158':['audience_impactful','body_dance','audience_immersive','freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','performer_solo_satisfaction','inst_triple_wind','inst_harp','inst_celesta','inst_trombone','inst_tuba','inst_quadruple_wind','inst_perc_up_to_3','fl3 ob2 cl4 fg3 hr6 tp4 trb4 tub1'],
+  'p0159':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','performer_solo_satisfaction','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_perc_4_or_more','fl3 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0179':['audience_impactful','body_dance','audience_immersive','freq_well_known','body_flow','audience_atmospheric','audience_moving','era_20th_century','region_russia','performer_solo_satisfaction','inst_harp','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0180':['audience_impactful','body_dance','audience_immersive','freq_well_known','body_flow','audience_atmospheric','audience_moving','era_20th_century','region_russia','performer_solo_satisfaction','inst_harp','inst_piano','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0181':['audience_impactful','body_dance','audience_immersive','brand_high_energy','audience_overwhelming','performer_brass_fun','freq_well_known','era_20th_century','region_russia','performer_solo_satisfaction','inst_triple_wind','inst_trombone','inst_tuba','inst_quadruple_wind','inst_perc_4_or_more','fl3 ob4 cl3 fg4 hr8 tp4 trb3 tub2'],
+  'p0192':['audience_impactful','body_dance','audience_immersive','freq_well_known','body_flow','audience_atmospheric','audience_moving','era_early_romantic','era_late_romantic','region_russia','performer_solo_satisfaction','inst_triple_wind','inst_harp','inst_celesta','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0193':['audience_impactful','body_dance','audience_immersive','freq_well_known','body_flow','audience_atmospheric','audience_moving','era_early_romantic','era_late_romantic','region_russia','performer_solo_satisfaction','inst_harp','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0194':['audience_impactful','body_dance','audience_immersive','freq_well_known','era_early_romantic','era_late_romantic','region_russia','performer_solo_satisfaction','inst_harp','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0195':['audience_impactful','body_dance','audience_immersive','freq_well_known','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','time_history','era_early_romantic','era_late_romantic','region_russia','performer_solo_satisfaction','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_perc_4_or_more','fl3 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0196':['freq_well_known','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','time_history','era_early_romantic','era_late_romantic','region_russia','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0200':['freq_well_known','brand_narrative','audience_storytelling','concept_memory','era_early_romantic','era_late_romantic','region_russia','performer_solo_satisfaction','inst_harp','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0202':['freq_well_known','brand_narrative','audience_storytelling','concept_memory','era_early_romantic','era_late_romantic','region_russia','performer_solo_satisfaction','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0207':['freq_well_known','era_early_romantic','era_late_romantic','region_russia','inst_perc_up_to_3'],
+  'p0208':['audience_impactful','body_dance','audience_immersive','freq_well_known','body_flow','audience_atmospheric','audience_moving','era_early_romantic','era_late_romantic','region_russia','performer_solo_satisfaction','inst_triple_wind','inst_harp','inst_celesta','inst_trombone','inst_tuba','inst_chorus','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0223':['freq_well_known','era_early_romantic','era_late_romantic','inst_perc_up_to_3'],
+  'p0225':['freq_well_known','era_early_romantic','era_late_romantic','inst_triple_wind','inst_trombone','inst_tuba','inst_quadruple_wind','inst_chorus','inst_perc_up_to_3','fl2 ob2 cl2 fg4 hr4 tp7 trb3 tub1'],
+  'p0235':['freq_well_known','brand_narrative','audience_storytelling','concept_memory','era_early_romantic','era_late_romantic','region_germany_austria','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0240':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','inst_harp','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0252':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','inst_perc_up_to_3'],
+  'p0257':['freq_well_known','brand_narrative','audience_storytelling','concept_memory','era_early_romantic','era_late_romantic','region_germany_austria','performer_solo_satisfaction','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0258':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0267':['body_flow','audience_atmospheric','audience_moving','freq_well_known','performer_solo_satisfaction','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2'],
+  'p0283':['era_classical','brand_narrative','audience_storytelling','concept_memory','freq_well_known','region_germany_austria','performer_solo_satisfaction','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr3 tp2'],
+  'p0285':['era_classical','freq_well_known','region_germany_austria','performer_solo_satisfaction','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2 trb3'],
+  'p0286':['freq_well_known','era_classical','brand_narrative','audience_storytelling','concept_memory','body_flow','audience_atmospheric','audience_moving','region_germany_austria','performer_solo_satisfaction','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2 trb2'],
+  'p0287':['freq_well_known','era_classical','region_germany_austria','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p0289':['era_classical','freq_well_known','region_germany_austria','inst_trombone','inst_chorus','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0293':['brand_high_energy','audience_overwhelming','performer_brass_fun','freq_well_known','brand_narrative','audience_storytelling','concept_memory','era_early_romantic','era_late_romantic','region_france','performer_solo_satisfaction','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_quadruple_wind','inst_perc_4_or_more','fl2 ob2 cl2 fg4 hr4 tp2 trb3 tub2'],
+  'p0304':['freq_well_known','era_early_romantic','era_late_romantic','region_russia','performer_solo_satisfaction','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_perc_4_or_more','fl3 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0307':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','performer_solo_satisfaction','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0308':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','performer_solo_satisfaction','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0310':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0321':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','performer_solo_satisfaction','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0324':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','performer_solo_satisfaction','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0325':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob3 cl3 fg3 hr8 tp3 trb3 tub1'],
+  'p0326':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','inst_triple_wind','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob3 cl3 fg3 hr8 tp3 trb3 tub1'],
+  'p0340':['era_early_romantic','era_late_romantic','freq_well_known','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','time_history','region_germany_austria','performer_solo_satisfaction','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0484':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_quadruple_wind','inst_perc_4_or_more','fl4 ob4 cl4 fg3 hr7 tp5 trb4 tub1'],
+  'p0485':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','inst_triple_wind','inst_harp','inst_organ','inst_trombone','inst_tuba','inst_quadruple_wind','inst_chorus','inst_perc_4_or_more','fl4 ob4 cl3 fg4 hr10 tp8 trb4 tub1'],
+  'p0488':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_quadruple_wind','inst_perc_4_or_more','fl4 ob3 cl3 fg3 hr6 tp4 trb3 tub1'],
+  'p0492':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_quadruple_wind','inst_perc_4_or_more','fl4 ob4 cl3 fg4 hr4 tp3 trb3 tub1'],
+  'p0502':['era_early_romantic','era_late_romantic','freq_well_known','region_germany_austria','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p0504':['freq_well_known','era_20th_century','region_france','inst_triple_wind','inst_celesta','inst_piano','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg3 hr4 tp3 trb3 tub1'],
+  'p0520':['freq_well_known','era_classical','region_germany_austria','inst_perc_up_to_3','ob2 fg2 hr4'],
+  'p0530':['freq_well_known','era_classical','region_germany_austria','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p0533':['freq_well_known','era_classical','region_germany_austria','inst_perc_up_to_3','fl1 cl2 fg2 hr2 tp2'],
+  'p0534':['freq_well_known','era_classical','region_germany_austria','inst_perc_up_to_3','fl1 ob2 cl2 fg2 hr2'],
+  'p0535':['freq_well_known','era_classical','region_germany_austria','inst_perc_up_to_3','fl1 ob2 fg2 hr2 tp2'],
+  'p0543':['freq_well_known','era_20th_century','region_nordic','inst_triple_wind','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob3 cl3 fg3 hr4 tp3 trb3 tub1'],
+  'p0546':['freq_well_known','era_20th_century','region_russia','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p0550':['freq_well_known','era_20th_century','region_russia','inst_harp','inst_piano','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0554':['freq_well_known','era_early_romantic','era_late_romantic','region_russia','inst_triple_wind','inst_trombone','inst_tuba','inst_perc_4_or_more','fl3 ob3 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0565':['freq_well_known','era_early_romantic','era_late_romantic','region_france','inst_triple_wind','inst_piano','inst_organ','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0575':['body_flow','audience_atmospheric','audience_moving','era_early_romantic','era_late_romantic','freq_well_known','region_germany_austria','performer_solo_satisfaction','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2 trb3'],
+  'p0589':['freq_well_known','era_20th_century','region_russia','performer_solo_satisfaction','inst_harp','inst_piano','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0591':['freq_well_known','era_20th_century','region_russia','performer_solo_satisfaction','inst_triple_wind','inst_harp','inst_piano','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl3 fg2 hr4 tp3 trb3 tub1'],
+  'p0594':['freq_well_known','era_20th_century','region_russia','inst_triple_wind','inst_trombone','inst_tuba','inst_perc_4_or_more','fl3 ob3 cl3 fg3 hr4 tp3 trb3 tub1'],
+  'p0602':['freq_well_known','era_early_romantic','era_late_romantic','region_nordic','performer_solo_satisfaction','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0611':['brand_high_energy','audience_overwhelming','performer_brass_fun','freq_well_known','brand_narrative','audience_storytelling','concept_memory','era_early_romantic','era_late_romantic','region_germany_austria','inst_triple_wind','inst_harp','inst_celesta','inst_organ','inst_trombone','inst_tuba','inst_quadruple_wind','inst_perc_4_or_more','fl4 ob3 cl3 fg4 hr8 tp4 trb4 tub2'],
+  'p0620':['body_flow','audience_atmospheric','audience_moving','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','time_history','freq_well_known','era_early_romantic','era_late_romantic','region_russia','performer_solo_satisfaction','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0621':['body_flow','audience_atmospheric','audience_moving','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','time_history','freq_well_known','era_early_romantic','era_late_romantic','region_russia','performer_solo_satisfaction','inst_triple_wind','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0622':['emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','time_history','body_flow','audience_atmospheric','audience_moving','freq_well_known','era_early_romantic','era_late_romantic','region_russia','performer_solo_satisfaction','inst_triple_wind','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0643':['freq_well_known','era_classical','region_germany_austria','inst_perc_up_to_3'],
+  'p0655':['freq_well_known','era_classical','region_germany_austria','inst_perc_up_to_3','fl1 ob2 cl2 fg2 hr2 tp2'],
+  'p0660':['freq_well_known','era_classical','region_germany_austria','inst_piano','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p0662':['freq_well_known','era_classical','region_germany_austria','inst_perc_up_to_3','fl1 ob2 fg2 hr2'],
+  'p0668':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2'],
+  'p0669':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2'],
+  'p0671':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2'],
+  'p0672':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2'],
+  'p0673':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','inst_harp','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0674':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','inst_harp','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp4 trb3 tub1'],
+  'p0676':['freq_well_known','era_early_romantic','era_late_romantic','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb1'],
+  'p0677':['freq_well_known','era_early_romantic','era_late_romantic','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2 trb1'],
+  'p0681':['freq_well_known','era_early_romantic','era_late_romantic','region_uk_us','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0686':['freq_well_known','era_early_romantic','era_late_romantic','region_nordic','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0698':['freq_well_known','era_20th_century','region_russia','inst_harp','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0703':['freq_well_known','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','time_history','inst_harp','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0725':['freq_well_known','era_classical','region_germany_austria','inst_perc_up_to_3','fl1 ob2 fg2 hr2 tp2'],
+  'p0726':['freq_well_known','era_classical','region_germany_austria','inst_perc_up_to_3','fl1 ob2 fg2 hr2 tp2'],
+  'p0728':['freq_well_known','era_classical','region_germany_austria','inst_perc_up_to_3','fl1 cl2 fg2 hr2'],
+  'p0735':['freq_well_known','era_classical','region_germany_austria','inst_perc_up_to_3','fl2 ob2 hr2'],
+  'p0737':['freq_well_known','era_classical','region_germany_austria','inst_perc_up_to_3','ob2 hr2'],
+  'p0740':['freq_well_known','era_classical','region_germany_austria','inst_perc_up_to_3','ob2 hr2'],
+  'p0750':['freq_well_known','era_early_romantic','era_late_romantic','region_russia','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0751':['freq_well_known','era_early_romantic','era_late_romantic','region_russia','inst_trombone','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0753':['freq_well_known','era_early_romantic','era_late_romantic','region_russia','inst_harp','inst_piano','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0754':['freq_well_known','era_20th_century','region_france','inst_harp','inst_trombone','inst_perc_up_to_3','fl1 ob1 cl1 fg2 hr2 tp1 trb1'],
+  'p0759':['freq_well_known','era_early_romantic','era_late_romantic','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','time_history','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p0770':['freq_well_known','era_early_romantic','era_late_romantic','region_france','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p0778':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p0781':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2 trb3'],
+  'p0785':['freq_well_known','era_20th_century','region_russia','inst_perc_up_to_3'],
+  'p0786':['freq_well_known','era_early_romantic','era_late_romantic','region_nordic','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0792':['freq_well_known','era_early_romantic','era_late_romantic','region_russia','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2'],
+  'p0793':['freq_well_known','era_early_romantic','era_late_romantic','region_russia','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0795':['freq_well_known','era_early_romantic','era_late_romantic','region_russia','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4'],
+  'p0826':['freq_well_known','era_early_romantic','era_late_romantic','region_russia','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2 trb3'],
+  'p0838':['freq_well_known','era_classical','region_germany_austria','inst_perc_up_to_3','fl1'],
+  'p0850':['freq_well_known','era_20th_century','region_uk_us','inst_perc_up_to_3'],
+  'p0853':['freq_well_known','audience_impactful','body_dance','audience_immersive','era_20th_century','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','time_history','performer_solo_satisfaction','inst_triple_wind','inst_harp','inst_celesta','inst_piano','inst_organ','inst_trombone','inst_tuba','inst_chorus','inst_perc_up_to_3','fl3 ob3 cl3 fg3 hr4 tp3 trb3 tub1'],
+  'p0857':['freq_well_known','audience_impactful','body_dance','audience_immersive','era_20th_century','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','time_history','performer_solo_satisfaction','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob3 cl3 fg3 hr4 tp3 trb3 tub1'],
+  'p0865':['freq_well_known','era_classical','brand_narrative','audience_storytelling','concept_memory','region_germany_austria','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0866':['freq_well_known','era_classical','brand_narrative','audience_storytelling','concept_memory','region_germany_austria','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2'],
+  'p0891':['freq_well_known','audience_impactful','body_dance','audience_immersive','brand_narrative','audience_storytelling','concept_memory','era_20th_century','region_uk_us','inst_harp','inst_celesta','inst_piano','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0894':['body_flow','audience_atmospheric','audience_moving','brand_narrative','audience_storytelling','concept_memory','freq_well_known','era_early_romantic','era_late_romantic','region_france','inst_harp','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0895':['body_flow','audience_atmospheric','audience_moving','brand_narrative','audience_storytelling','concept_memory','freq_well_known','era_early_romantic','era_late_romantic','region_france','inst_harp','inst_trombone','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0896':['body_flow','audience_atmospheric','audience_moving','brand_narrative','audience_storytelling','concept_memory','era_early_romantic','era_late_romantic','freq_well_known','region_france','inst_harp','inst_trombone','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0897':['body_flow','audience_atmospheric','audience_moving','brand_narrative','audience_storytelling','concept_memory','era_early_romantic','era_late_romantic','freq_well_known','region_france','inst_harp','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 trb3 tub1'],
+  'p0904':['freq_well_known','era_early_romantic','era_late_romantic','region_russia','inst_harp','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0947':['era_early_romantic','era_late_romantic','freq_well_known','region_france','performer_solo_satisfaction','inst_triple_wind','inst_harp','inst_celesta','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg3 hr4 tp3 trb3 tub1'],
+  'p0949':['freq_well_known','era_early_romantic','era_late_romantic','region_france','inst_triple_wind','inst_harp','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4'],
+  'p0955':['freq_well_known','era_early_romantic','era_late_romantic','region_france','inst_triple_wind','inst_harp','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4 tp2'],
+  'p0956':['freq_well_known','era_early_romantic','era_late_romantic','region_france','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_chorus','inst_perc_up_to_3','fl3 ob2 cl2 fg3 hr4 tp3 trb3 tub1'],
+  'p0971':['freq_well_known','era_early_romantic','era_late_romantic','region_france','inst_triple_wind','inst_harp','inst_trombone','inst_perc_4_or_more','fl2 ob2 cl2 fg3 hr4 tp2 trb3'],
+  'p0974':['freq_well_known','era_early_romantic','era_late_romantic','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','time_history','region_germany_austria','inst_trombone','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0988':['freq_well_known','era_early_romantic','era_late_romantic','region_uk_us','performer_solo_satisfaction','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0994':['freq_well_known','audience_impactful','body_dance','audience_immersive','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','time_history','performer_solo_satisfaction','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0997':['freq_well_known','era_early_romantic','era_late_romantic','region_france','inst_harp','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2'],
+  'p1005':['freq_well_known','era_20th_century','region_uk_us','inst_triple_wind','inst_trombone','inst_tuba','inst_perc_4_or_more','fl3 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p1006':['freq_well_known','era_20th_century','region_uk_us','inst_piano','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr3 tp3 trb3 tub1'],
+  'p1025':['freq_well_known','era_early_romantic','era_late_romantic','region_nordic','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p1026':['freq_well_known','era_early_romantic','era_late_romantic','region_nordic','inst_harp','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p1030':['freq_well_known','era_early_romantic','era_late_romantic','region_nordic','inst_perc_up_to_3'],
+  'p1033':['freq_well_known','era_20th_century','inst_triple_wind','inst_harp','inst_celesta','inst_piano','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p1034':['freq_well_known','era_classical','region_germany_austria','inst_triple_wind','inst_quadruple_wind','inst_perc_up_to_3','ob24 fg12 hr9 tp9'],
+  'p1035':['freq_well_known','era_classical','brand_narrative','audience_storytelling','concept_memory','region_germany_austria','inst_triple_wind','inst_quadruple_wind','inst_perc_up_to_3','ob24 fg12 hr9 tp9'],
+  'p1042':['freq_well_known','era_20th_century','region_germany_austria','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p1053':['freq_well_known','brand_narrative','audience_storytelling','concept_memory','inst_trombone','inst_tuba','inst_perc_up_to_3','fl1 ob1 cl1 fg2 hr2 tp2 trb3 tub1'],
+  'p1054':['freq_well_known','brand_narrative','audience_storytelling','concept_memory','inst_tuba','inst_perc_up_to_3','fl1 ob1 cl1 fg1 hr2 tp2 tub1'],
+  'p1057':['emotion_sublime','emotion_mystery','emotion_transcendence','space_cosmos','audience_overwhelming','audience_accessible','audience_impactful','brand_large_scale','freq_iconic','era_20th_century','brand_high_energy','performer_brass_fun','freq_well_known','performer_solo_satisfaction','inst_triple_wind','inst_harp','inst_celesta','inst_organ','inst_trombone','inst_tuba','inst_quadruple_wind','inst_chorus','inst_perc_4_or_more','fl4 ob3 cl3 fg3 hr6 tp4 trb3 tub1'],
+  'p1062':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p1066':['freq_well_known','era_20th_century','region_france','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg3 hr4 tp3 trb3 tub1'],
+  'p1075':['freq_well_known','audience_impactful','body_dance','audience_immersive','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','time_history','inst_harp','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p1082':['freq_well_known','era_20th_century','region_russia','inst_piano','inst_trombone','inst_tuba','inst_perc_up_to_3','fl1 ob1 cl2 fg1 hr2 tp2 trb1 tub1'],
+  'p1083':['freq_well_known','era_20th_century','region_russia','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p1084':['freq_well_known','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','time_history','brand_narrative','audience_storytelling','concept_memory','era_20th_century','inst_triple_wind','inst_celesta','inst_piano','inst_trombone','inst_tuba','inst_perc_4_or_more','fl3 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p1085':['freq_well_known','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','time_history','brand_narrative','audience_storytelling','concept_memory','era_20th_century','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2'],
+  'p1086':['freq_well_known','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','time_history','brand_narrative','audience_storytelling','concept_memory','era_20th_century','inst_harp','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp3 trb3'],
+  'p1096':['freq_well_known','era_early_romantic','era_late_romantic','region_germany_austria','inst_perc_up_to_3'],
+  'p1126':['freq_well_known','brand_narrative','audience_storytelling','concept_memory','era_early_romantic','era_late_romantic','region_germany_austria','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p1152':['freq_well_known','era_classical','inst_organ','inst_trombone','inst_chorus','inst_perc_up_to_3','fg2 tp2 trb3'],
+  'p1159':['brand_high_energy','audience_overwhelming','performer_brass_fun','era_early_romantic','era_late_romantic','freq_well_known','region_russia','performer_solo_satisfaction','inst_harp','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p1160':['audience_impactful','body_dance','audience_immersive','era_early_romantic','era_late_romantic','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','time_history','freq_well_known','region_france','inst_trombone','inst_tuba','inst_perc_up_to_3'],
+  'p1161':['era_classical','freq_well_known','brand_narrative','audience_storytelling','concept_memory','region_germany_austria','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb2'],
+  'p1162':['brand_high_energy','audience_overwhelming','performer_brass_fun','freq_well_known','era_20th_century','region_russia','inst_triple_wind','inst_trombone','inst_tuba','inst_perc_4_or_more','fl3 ob3 cl3 fg3 hr4 tp3 trb3 tub1'],
+  'p1163':['brand_high_energy','audience_overwhelming','performer_brass_fun','era_early_romantic','era_late_romantic','freq_well_known','region_russia','performer_solo_satisfaction','inst_triple_wind','inst_harp','inst_celesta','inst_trombone','inst_tuba','inst_perc_4_or_more','fl3 ob3 cl3 fg3 hr4 tp3 trb3 tub1'],
+  'p0277':['era_classical','region_germany_austria','inst_perc_up_to_3','ob2 hr2'],
+  'p0278':['era_classical','region_germany_austria','inst_perc_up_to_3','fl2 cl2 fg2 hr2'],
+  'p0279':['era_classical','region_germany_austria','inst_perc_up_to_3','fl2 ob1 hr2'],
+  'p0281':['era_classical','region_germany_austria','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p0282':['era_classical','region_germany_austria','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p0284':['era_classical','region_germany_austria','inst_perc_up_to_3','fl1 ob2 cl2 fg2 hr2 tp2'],
+  'p0288':['era_classical','region_germany_austria','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p0291':['audience_overwhelming','audience_familiar','era_early_romantic','era_late_romantic','region_france','performer_solo_satisfaction','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_quadruple_wind','inst_perc_up_to_3','fl2 ob2 cl2 fg4 hr4 tp2 trb3 tub1'],
+  'p0292':['era_early_romantic','era_late_romantic','region_france','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_quadruple_wind','inst_perc_up_to_3','fl2 ob2 cl4 fg4 hr4 tp2 trb3 tub1'],
+  'p0296':['era_20th_century','region_uk_us','inst_piano','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0297':['era_20th_century','region_uk_us','inst_harp','inst_celesta','inst_piano','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp4 trb4 tub1'],
+  'p0298':['era_20th_century','region_uk_us','inst_triple_wind','inst_harp','inst_celesta','inst_piano','inst_trombone','inst_tuba','inst_quadruple_wind','inst_chorus','inst_vocal_solo','inst_perc_up_to_3','fl4 ob2 cl2 fg2 hr4 tp4 trb3 tub1'],
+  'p0302':['era_early_romantic','era_late_romantic','region_france','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2'],
+  'p0303':['era_early_romantic','era_late_romantic','region_russia','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0305':['era_early_romantic','era_late_romantic','region_russia','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0309':['era_early_romantic','era_late_romantic','region_germany_austria','performer_solo_satisfaction','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0311':['era_20th_century','region_uk_us','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_chorus','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0312':['era_20th_century','region_uk_us','inst_triple_wind','inst_harp','inst_piano','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl3 fg2 hr6 tp3 trb3 tub1'],
+  'p0317':['era_early_romantic','era_late_romantic','region_germany_austria','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0318':['era_early_romantic','era_late_romantic','region_germany_austria','inst_triple_wind','inst_trombone','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0319':['era_early_romantic','era_late_romantic','region_germany_austria','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0320':['era_early_romantic','era_late_romantic','region_germany_austria','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp3 trb3'],
+  'p0322':['era_early_romantic','era_late_romantic','region_germany_austria','performer_solo_satisfaction','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0323':['era_early_romantic','era_late_romantic','region_germany_austria','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0327':['era_early_romantic','era_late_romantic','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl2 fg3 hr4 tp4 trb3 tub1'],
+  'p0331':['era_early_romantic','era_late_romantic','region_france','inst_triple_wind','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0332':['era_early_romantic','era_late_romantic','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','region_germany_austria','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0333':['era_early_romantic','era_late_romantic','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','region_germany_austria','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0334':['era_early_romantic','era_late_romantic','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','region_germany_austria','inst_harp','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0335':['era_early_romantic','era_late_romantic','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','region_germany_austria','inst_harp','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0336':['era_early_romantic','era_late_romantic','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','region_germany_austria','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0337':['era_early_romantic','era_late_romantic','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','region_germany_austria','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0338':['era_early_romantic','era_late_romantic','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','region_germany_austria','performer_solo_satisfaction','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0339':['era_early_romantic','era_late_romantic','emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','region_germany_austria','performer_solo_satisfaction','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0342':['era_early_romantic','era_late_romantic','region_uk_us','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0343':['era_early_romantic','era_late_romantic','region_uk_us','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0344':['era_early_romantic','era_late_romantic','region_france','inst_harp','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0347':['era_early_romantic','era_late_romantic','region_russia','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0348':['era_early_romantic','era_late_romantic','region_russia','inst_triple_wind','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0349':['era_early_romantic','era_late_romantic','region_russia','inst_triple_wind','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl3 fg2 hr4 tp3 trb3 tub1'],
+  'p0350':['era_early_romantic','era_late_romantic','region_nordic','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2 trb3'],
+  'p0380':['era_classical','inst_perc_up_to_3','fl1 ob2 fg1 hr4'],
+  'p0393':['era_classical','inst_perc_up_to_3','ob2 fg1 hr2'],
+  'p0402':['era_classical','inst_perc_up_to_3','fl2 ob2 fg2 hr2 tp2'],
+  'p0404':['era_classical','inst_perc_up_to_3','ob2 fg1 hr2'],
+  'p0408':['era_classical','inst_perc_up_to_3','ob2 fg1 hr2'],
+  'p0409':['era_classical','inst_perc_up_to_3','fl1 ob2 fg2 hr2'],
+  'p0415':['era_classical','inst_perc_up_to_3','ob2 fg2 hr2'],
+  'p0420':['era_classical','inst_perc_up_to_3','fl1 ob2 fg1 hr4'],
+  'p0421':['era_classical','inst_perc_up_to_3','fl1 ob2 fg2 hr2'],
+  'p0431':['era_classical','inst_perc_up_to_3','fl1 ob2 fg2 hr2'],
+  'p0433':['era_classical','inst_perc_up_to_3','fl1 ob2 fg2 hr2'],
+  'p0434':['era_classical','inst_perc_up_to_3','fl1 ob2 fg2 hr2'],
+  'p0437':['era_classical','inst_perc_up_to_3','fl1 ob2 fg2 hr1'],
+  'p0438':['era_classical','inst_perc_up_to_3','fl1 ob2 fg2 hr2 tp2'],
+  'p0439':['era_classical','inst_perc_up_to_3','fl2 ob2 fg2 hr2'],
+  'p0440':['era_classical','inst_perc_up_to_3','fl2 ob2 fg2 hr2 tp2'],
+  'p0441':['era_classical','inst_perc_up_to_3','fl1 ob2 fg2 hr2'],
+  'p0442':['era_classical','inst_perc_up_to_3','fl2 ob2 fg2 hr2 tp2'],
+  'p0443':['era_classical','inst_perc_up_to_3','fl2 ob2 fg2 hr2'],
+  'p0444':['era_classical','inst_piano','inst_perc_up_to_3','fl1 ob2 fg2 hr2 tp2'],
+  'p0445':['era_classical','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2'],
+  'p0446':['era_classical','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p0447':['era_classical','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p0448':['era_classical','inst_perc_up_to_3','fl2 ob2 fg2 hr2'],
+  'p0449':['era_classical','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2'],
+  'p0450':['era_classical','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p0459':['era_20th_century','region_germany_austria','performer_solo_satisfaction','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0460':['era_20th_century','region_germany_austria','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0461':['era_20th_century','region_germany_austria','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0462':['era_20th_century','region_france','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp3 tub1'],
+  'p0463':['era_20th_century','region_france','inst_perc_up_to_3','tp1'],
+  'p0464':['era_20th_century','region_france','inst_triple_wind','inst_piano','inst_trombone','inst_tuba','inst_perc_4_or_more','fl3 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0465':['era_20th_century','region_france','inst_piano','inst_perc_up_to_3','fl2 ob1 cl2 fg1 hr2 tp1'],
+  'p0466':['era_20th_century','region_france','inst_triple_wind','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl2 fg3 hr4 tp3 trb3 tub1'],
+  'p0471':['era_20th_century','region_uk_us','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0472':['era_20th_century','region_uk_us','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0473':['era_20th_century','region_uk_us','inst_trombone','inst_perc_up_to_3','fl1 ob1 cl1 fg1 hr2 trb1'],
+  'p0474':['era_20th_century','region_uk_us','inst_triple_wind','inst_harp','inst_celesta','inst_piano','inst_organ','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl3 fg3 hr4 tp6 trb3 tub1'],
+  'p0477':['era_early_romantic','era_late_romantic','region_russia','performer_solo_satisfaction','inst_harp','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0478':['era_early_romantic','era_late_romantic','region_russia','inst_harp','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0479':['era_20th_century','region_russia','inst_triple_wind','inst_harp','inst_piano','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl3 fg2 hr4 tp3 trb3 tub1'],
+  'p0481':['era_early_romantic','era_late_romantic','region_germany_austria','inst_triple_wind','inst_harp','inst_organ','inst_trombone','inst_tuba','inst_chorus','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0482':['brand_narrative','audience_storytelling','era_early_romantic','era_late_romantic','region_germany_austria','inst_harp','inst_organ','inst_trombone','inst_tuba','inst_chorus','inst_vocal_solo','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0486':['era_early_romantic','era_late_romantic','region_germany_austria','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_quadruple_wind','inst_chorus','inst_vocal_solo','inst_perc_4_or_more','fl4 ob4 cl3 fg4 hr8 tp4 trb4 tub1'],
+  'p0487':['era_early_romantic','era_late_romantic','region_germany_austria','inst_triple_wind','inst_harp','inst_quadruple_wind','inst_vocal_solo','inst_perc_4_or_more','fl4 ob3 cl3 fg3 hr4 tp3'],
+  'p0489':['era_early_romantic','era_late_romantic','region_germany_austria','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_quadruple_wind','inst_perc_4_or_more','fl4 ob4 cl3 fg4 hr8 tp6 trb4 tub1'],
+  'p0490':['era_early_romantic','era_late_romantic','region_germany_austria','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_quadruple_wind','inst_perc_up_to_3','fl4 ob3 cl3 fg3 hr4 tp3 trb3 tub1'],
+  'p0491':['era_early_romantic','era_late_romantic','region_germany_austria','inst_triple_wind','inst_harp','inst_celesta','inst_piano','inst_organ','inst_trombone','inst_tuba','inst_quadruple_wind','inst_chorus','inst_perc_up_to_3','fl4 ob4 cl3 fg4 hr8 tp4 trb4 tub1'],
+  'p0493':['era_early_romantic','era_late_romantic','region_germany_austria','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob3 cl3 fg3 hr4 tp4 trb3 tub1'],
+  'p0494':['era_early_romantic','era_late_romantic','region_germany_austria','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_quadruple_wind','inst_perc_4_or_more','fl4 ob4 cl4 fg4 hr4 tp4 trb4 tub1'],
+  'p0499':['era_early_romantic','era_late_romantic','region_germany_austria','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p0500':['era_early_romantic','era_late_romantic','region_germany_austria','inst_trombone','inst_chorus','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0501':['era_early_romantic','era_late_romantic','region_germany_austria','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2'],
+  'p0503':['era_early_romantic','era_late_romantic','region_germany_austria','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2 trb3'],
+  'p0509':['era_classical','region_germany_austria','inst_perc_up_to_3'],
+  'p0517':['era_classical','region_germany_austria','inst_perc_up_to_3','ob2 hr4'],
+  'p0521':['era_classical','region_germany_austria','inst_perc_up_to_3','fl2 ob2 fg2 hr2 tp2'],
+  'p0522':['era_classical','region_germany_austria','inst_perc_up_to_3','fl2 hr2'],
+  'p0523':['era_classical','region_germany_austria','inst_perc_up_to_3','ob2 hr2 tp2'],
+  'p0524':['era_classical','region_germany_austria','inst_perc_up_to_3','ob2 hr2'],
+  'p0525':['era_classical','region_germany_austria','inst_perc_up_to_3','ob2 hr2 tp2'],
+  'p0526':['era_classical','region_germany_austria','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p0527':['era_classical','region_germany_austria','inst_perc_up_to_3','fl2 ob2 fg2 hr4 tp2'],
+  'p0528':['era_classical','region_germany_austria','inst_perc_up_to_3','fl2 ob2 fg2 hr2'],
+  'p0529':['era_classical','region_germany_austria','inst_perc_up_to_3','fl2 ob2 fg2 hr2 tp2'],
+  'p0531':['era_classical','region_germany_austria','inst_perc_up_to_3','ob2 fg2 hr2 tp2'],
+  'p0532':['era_classical','region_germany_austria','inst_perc_up_to_3','fl2 ob2 fg2 hr2 tp2'],
+  'p0540':['era_20th_century','region_nordic','inst_triple_wind','inst_trombone','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0541':['era_20th_century','region_nordic','inst_triple_wind','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0542':['era_20th_century','region_nordic','inst_triple_wind','inst_trombone','inst_tuba','inst_vocal_solo','inst_perc_up_to_3','fl3 ob3 cl3 fg3 hr4 tp3 trb3 tub1'],
+  'p0544':['era_20th_century','region_nordic','inst_triple_wind','inst_celesta','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0545':['era_20th_century','region_nordic','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0547':['era_20th_century','region_russia','inst_piano','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0548':['era_20th_century','region_russia','inst_harp','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp3 trb1 tub1'],
+  'p0549':['era_20th_century','region_russia','inst_harp','inst_piano','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0551':['era_20th_century','region_russia','inst_harp','inst_celesta','inst_piano','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0552':['era_20th_century','region_russia','inst_harp','inst_piano','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0553':['era_early_romantic','era_late_romantic','region_russia','inst_triple_wind','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0555':['era_early_romantic','era_late_romantic','region_russia','inst_harp','inst_celesta','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0559':['era_early_romantic','era_late_romantic','region_russia','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0563':['era_early_romantic','era_late_romantic','region_france','inst_harp','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p0564':['era_early_romantic','era_late_romantic','region_france','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p0567':['era_20th_century','inst_perc_up_to_3','fl1 ob1 cl2 fg1 hr2'],
+  'p0568':['era_20th_century','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p0569':['era_early_romantic','era_late_romantic','region_germany_austria','inst_perc_up_to_3','fl1 ob2 cl2 fg2 hr2 tp2'],
+  'p0570':['era_early_romantic','era_late_romantic','region_germany_austria','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p0571':['era_early_romantic','era_late_romantic','region_germany_austria','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p0572':['era_early_romantic','era_late_romantic','region_germany_austria','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2'],
+  'p0573':['era_early_romantic','era_late_romantic','region_germany_austria','inst_perc_up_to_3','fl1 ob2 fg2 hr2'],
+  'p0574':['era_early_romantic','era_late_romantic','region_germany_austria','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2'],
+  'p0576':['era_early_romantic','era_late_romantic','region_germany_austria','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2 trb3'],
+  'p0577':['era_early_romantic','era_late_romantic','region_germany_austria','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0578':['era_early_romantic','era_late_romantic','region_germany_austria','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2 trb3'],
+  'p0579':['era_early_romantic','era_late_romantic','region_germany_austria','performer_solo_satisfaction','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0580':['era_early_romantic','era_late_romantic','region_germany_austria','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0581':['era_early_romantic','era_late_romantic','region_germany_austria','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2 trb3'],
+  'p0582':['era_early_romantic','era_late_romantic','region_russia','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_quadruple_wind','inst_perc_up_to_3','fl4 ob4 cl4 fg4 hr8 tp5 trb3 tub1'],
+  'p0583':['era_early_romantic','era_late_romantic','region_russia','inst_triple_wind','inst_harp','inst_celesta','inst_organ','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob3 cl3 fg3 hr8 tp5 trb3 tub1'],
+  'p0584':['era_early_romantic','era_late_romantic','region_russia','inst_triple_wind','inst_harp','inst_celesta','inst_piano','inst_organ','inst_trombone','inst_tuba','inst_chorus','inst_perc_up_to_3','fl3 ob3 cl3 fg3 hr8 tp5 trb3 tub1'],
+  'p0585':['era_20th_century','region_russia','performer_solo_satisfaction','inst_piano','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0586':['era_20th_century','region_russia','inst_trombone','inst_tuba','inst_chorus','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0587':['era_20th_century','region_russia','inst_trombone','inst_tuba','inst_chorus','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0588':['era_20th_century','region_russia','inst_triple_wind','inst_harp','inst_celesta','inst_trombone','inst_tuba','inst_quadruple_wind','inst_perc_up_to_3','fl4 ob4 cl4 fg3 hr8 tp4 trb3 tub2'],
+  'p0590':['era_20th_century','region_russia','inst_triple_wind','inst_harp','inst_celesta','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl3 fg2 hr4 tp3 trb3 tub1'],
+  'p0592':['era_20th_century','region_russia','inst_trombone','inst_tuba','inst_perc_4_or_more','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0593':['era_20th_century','region_russia','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0595':['era_20th_century','region_russia','inst_triple_wind','inst_harp','inst_celesta','inst_trombone','inst_tuba','inst_perc_4_or_more','fl3 ob2 cl3 fg3 hr4 tp3 trb3 tub1'],
+  'p0596':['era_20th_century','region_russia','inst_triple_wind','inst_trombone','inst_tuba','inst_perc_4_or_more','fl3 ob3 cl3 fg3 hr4 tp3 trb3 tub1'],
+  'p0597':['era_20th_century','region_russia','inst_triple_wind','inst_harp','inst_celesta','inst_piano','inst_trombone','inst_tuba','inst_chorus','inst_perc_4_or_more','fl2 ob3 cl3 fg2 hr4 tp3 trb3 tub1'],
+  'p0598':['era_20th_century','region_russia','inst_celesta','inst_perc_up_to_3'],
+  'p0599':['era_20th_century','region_russia','inst_celesta','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0600':['emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','era_early_romantic','era_late_romantic','region_nordic','inst_triple_wind','inst_trombone','inst_tuba','inst_chorus','inst_perc_up_to_3','fl2 ob3 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0601':['era_early_romantic','era_late_romantic','region_nordic','performer_solo_satisfaction','inst_harp','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0603':['era_early_romantic','era_late_romantic','region_nordic','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0604':['era_early_romantic','era_late_romantic','region_nordic','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0605':['era_early_romantic','era_late_romantic','region_nordic','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp3 trb3'],
+  'p0606':['era_early_romantic','era_late_romantic','region_nordic','inst_harp','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp3 trb3'],
+  'p0607':['era_early_romantic','era_late_romantic','region_nordic','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp3 trb3'],
+  'p0612':['era_early_romantic','era_late_romantic','region_germany_austria','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_quadruple_wind','inst_perc_up_to_3','fl4 ob2 cl4 fg4 hr4 tp4 trb3 tub1'],
+  'p0613':['era_20th_century','region_russia','inst_triple_wind','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl3 fg3 hr4 tp3 trb3 tub1'],
+  'p0614':['era_20th_century','region_russia','inst_triple_wind','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0615':['era_20th_century','region_russia','inst_triple_wind','inst_harp','inst_piano','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl3 fg2 hr4 tp3 trb3 tub1'],
+  'p0616':['era_20th_century','region_russia','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_quadruple_wind','inst_chorus','inst_perc_up_to_3','fl5 ob4 fg3 hr4 tp4 trb3 tub1'],
+  'p0617':['era_early_romantic','era_late_romantic','region_russia','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0618':['era_early_romantic','era_late_romantic','region_russia','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0619':['emotion_nostalgia','space_foreign_land','concept_homeland','concept_ethnicity','era_early_romantic','era_late_romantic','region_russia','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0624':['brand_narrative','audience_storytelling','era_early_romantic','era_late_romantic','region_russia','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl2 fg3 hr4 tp2 trb3 tub1'],
+  'p0626':['era_early_romantic','era_late_romantic','region_uk_us','inst_triple_wind','inst_harp','inst_organ','inst_trombone','inst_tuba','inst_chorus','inst_perc_up_to_3','fl2 ob2 cl3 fg2 hr4 tp3 trb3 tub1'],
+  'p0627':['era_early_romantic','era_late_romantic','region_uk_us','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0628':['era_early_romantic','era_late_romantic','region_uk_us','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_vocal_solo','inst_perc_up_to_3','fl3 ob2 cl3 fg2 hr4 tp3 trb3 tub1'],
+  'p0629':['era_early_romantic','era_late_romantic','region_uk_us','inst_triple_wind','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0630':['era_early_romantic','era_late_romantic','region_uk_us','inst_trombone','inst_perc_up_to_3','fl2 ob1 cl2 fg2 hr2 tp2 trb3'],
+  'p0631':['era_early_romantic','era_late_romantic','region_uk_us','inst_triple_wind','inst_harp','inst_trombone','inst_tuba','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4 tp4 trb3 tub1'],
+  'p0632':['era_early_romantic','era_late_romantic','region_uk_us','inst_triple_wind','inst_harp','inst_celesta','inst_piano','inst_organ','inst_trombone','inst_tuba','inst_chorus','inst_vocal_solo','inst_perc_up_to_3','fl3 ob2 cl2 fg2 hr4 tp3 trb3 tub1'],
+  'p0633':['era_early_romantic','era_late_romantic','region_uk_us','inst_triple_wind','inst_harp','inst_trombone','inst_perc_4_or_more','fl2 ob2 cl2 fg3 hr2 tp2 trb3'],
+  'p0634':['era_early_romantic','era_late_romantic','region_uk_us','inst_harp','inst_celesta','inst_trombone','inst_tuba','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3 tub1'],
+  'p0635':['era_early_romantic','era_late_romantic','region_germany_austria','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr4 tp2 trb3'],
+  'p0636':['era_early_romantic','era_late_romantic','region_germany_austria','inst_perc_up_to_3','fl1 ob2 fg2 hr2 tp2'],
+  'p0637':['era_early_romantic','era_late_romantic','region_germany_austria','inst_perc_up_to_3','fl1 ob2 fg2 hr2 tp2'],
+  'p0638':['era_20th_century','region_germany_austria','inst_harp','inst_perc_up_to_3','cl1 hr2'],
+  'p0639':['era_20th_century','region_germany_austria','inst_trombone','inst_perc_up_to_3','fl2 ob2 cl2 fg2 hr2 tp2 trb2']
+};
+
+let DB={},cur=null,filt='',aiProp=[];
+
+function loadDB(){
+  // PRESETSをベースとして展開（ID配列）
+  Object.entries(PRESETS).forEach(function(entry){
+    DB[entry[0]]=[].concat(entry[1]);
+  });
+  // 有効なタグIDセット（未知IDをマージしないためのフィルタ）
+  var validIds=new Set(Object.keys(TAG_LABEL));
+  // localStorageのユーザー追加タグをマージ（有効IDのみ）
+  try{
+    var s=localStorage.getItem('kcpo-v13');
+    if(s){
+      var saved=JSON.parse(s);
+      Object.entries(saved).forEach(function(entry){
+        var pid=entry[0], ids=entry[1];
+        if(!DB[pid])return;
+        var base=new Set(DB[pid]);
+        (ids||[]).forEach(function(tid){
+          // TAG_LABELに存在するIDのみ追加（旧ID・不正IDを排除）
+          if(validIds.has(tid)&&!base.has(tid)){DB[pid].push(tid);base.add(tid);}
+        });
+      });
+    }
+  }catch(e){}
+  try{localStorage.setItem('kcpo-v13',JSON.stringify(DB));}catch(e){}
+}
+function saveDB(){try{localStorage.setItem('kcpo-v13',JSON.stringify(DB));}catch(e){}}
+function getMT(id){
+  return (DB[id]||[]).map(function(tid){
+    return {id:tid,label:TAG_LABEL[tid]||tid};
+  });
+}
+function hasMT(id){return !!(DB[id]&&DB[id].length)}
+function isOn(pid,tagId){return (DB[pid]||[]).includes(tagId);}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function togTag(tagId){
+  if(!cur)return;
+  if(!DB[cur])DB[cur]=[];
+  const i=DB[cur].indexOf(tagId);
+  if(i>=0)DB[cur].splice(i,1);else DB[cur].push(tagId);
+  saveDB();renderTags();updateMtPreview();updatePreview();updateStats();
+}
+
+function renderList(){
+  const q=document.getElementById('qi').value.trim().toLowerCase();
+  const ps=PIECES.filter(p=>{
+    if(q&&!(p.cmp+p.en+p.title).toLowerCase().includes(q))return false;
+    if(filt==='tagged')return hasMT(p.id);
+    if(filt==='none')return !hasMT(p.id);
+    if(filt==='sym')return !!p.isSym;
+    return true;
+  }).slice().sort(function(a,b){
+    // 第1キー: 作曲家名アルファベット順 (en)
+    var ea=(a.en||a.cmp).toLowerCase();
+    var eb=(b.en||b.cmp).toLowerCase();
+    if(ea<eb)return -1;
+    if(ea>eb)return 1;
+    // 第2キー: ID数字部分の昇順（p0001→p0002…の自然順）
+    var na=parseInt(a.id.replace('p',''),10)||0;
+    var nb=parseInt(b.id.replace('p',''),10)||0;
+    return na-nb;
+  });
+  document.getElementById('plist').innerHTML=ps.map(p=>
+    '<div class="pitem'+(cur===p.id?' active':'')+(hasMT(p.id)?' tagged':'')+'" data-id="'+esc(p.id)+'">'
+    +'<div class="pdot"></div>'
+    +'<div class="pinfo"><div class="pc">'+(p.en&&p.en!==p.cmp?esc(p.cmp)+' '+esc(p.en):esc(p.cmp))+'</div><div class="pt">'+esc(p.title)+'</div></div>'
+    +(getMT(p.id).length>0?'<span class="ptag-cnt">'+getMT(p.id).length+'</span>':'')
+    +'</div>'
+  ).join('');
+  document.getElementById('pcnt').textContent=ps.length+' / '+PIECES.length+' 曲';
+  document.querySelectorAll('.pitem').forEach(el=>{
+    el.addEventListener('click',()=>selPiece(el.dataset.id));
+  });
+}
+
+function setF(f){
+  filt=(filt===f)?'':f;
+  document.querySelectorAll('.fc').forEach(b=>b.classList.remove('on'));
+  document.getElementById({'':'f-all','tagged':'f-tagged','none':'f-none','sym':'f-sym'}[filt]).classList.add('on');
+  renderList();
+}
+
+function selPiece(id){
+  cur=id;aiProp=[];
+  CATS.forEach(c=>{c.v=c.dv;});
+  renderList();renderEditor();
+}
+
+function renderEditor(){
+  const p=PIECES.find(x=>x.id===cur);if(!p)return;
+  document.getElementById('nosel').style.display='none';
+  const ec=document.getElementById('econtent');
+  ec.style.display='block';
+  const yr=p.yr>0?p.yr+'年（'+p.con+'）':'未演奏';
+  ec.innerHTML=
+    '<div style="margin-bottom:12px">'
+    +'<div class="piece-composer">'+(p.en&&p.en!==p.cmp?esc(p.cmp)+' '+esc(p.en):esc(p.cmp))+'</div>'
+    +'<div class="piece-title">'+esc(p.title)+'</div>'
+    +'<div class="piece-meta"><span class="badge">'+p.dur+'分</span><span class="badge yr">'+esc(yr)+'</span></div>'
+    +'</div>'
+    +'<div class="etags-sec">'
+    +'<div class="etags-label">意味タグ</div>'
+    +'<div id="mt-preview">'
+    +(getMT(p.id).length
+      ? getMT(p.id).map(x=>'<span class="etag">'+esc(x.label)+'</span>').join('')
+      : '<span style="font-size:11px;color:#aeaeb2">未設定</span>')
+    +'</div>'
+    +'</div>'
+
+
+    +'<div id="tagcats"></div>';
+  renderTags();updatePreview();
+}
+
+function renderTags(){
+  const el=document.getElementById('tagcats');
+  if(!el||!cur)return;
+  const visible=CATS.filter(c=>c.v);
+  const hidden=CATS.filter(c=>!c.v);
+  const catsHtml=visible.map(cat=>{
+    const sel=(DB[cur]||[]).filter(function(tid){return cat.core.some(function(tc){return tc.id===tid;});}).length;
+    const chips=cat.core.map(function(tc){
+      const on=isOn(cur,tc.id);
+      const ai=aiProp.indexOf(tc.id)>=0;
+      return '<button class="tchip'+(on?' on':'')+(ai&&!on?' ai-prop':'')+'" data-tagid="'+esc(tc.id)+'">'+esc(tc.label)+'</button>';
+    }).join('');
+    return '<div class="cat-section">'
+      +'<div class="cat-hdr"><span class="cat-name">'+esc(cat.name)+'</span>'+(sel?'<span class="cat-count">'+sel+'</span>':'')+'</div>'
+      +'<div class="tags-row">'+chips+'</div>'
+      +'</div>';
+  }).join('');
+  const addBtn=hidden.length>0
+    ?'<div class="add-cat-wrap"><button id="add-cat-btn">+ カテゴリを追加（残り'+hidden.length+'件）</button></div>'
+    :'';
+  el.innerHTML=catsHtml+addBtn;
+  el.querySelectorAll('.tchip').forEach(b=>{
+    b.addEventListener('click',ev=>{ev.stopPropagation();togTag(b.dataset.tagid);});
+  });
+  const ab=document.getElementById('add-cat-btn');
+  if(ab)ab.addEventListener('click',()=>{
+    const next=CATS.find(c=>!c.v);
+    if(next){next.v=true;renderTags();}
+  });
+}
+
+function updateMtPreview(){
+  const el=document.getElementById('mt-preview');
+  if(!el||!cur)return;
+  const mt=getMT(cur);
+  el.innerHTML=mt.length
+    ?mt.map(x=>'<span class="etag">'+esc(x.label)+'</span>').join('')
+    :'<span style="font-size:11px;color:#aeaeb2">未設定</span>';
+}
+function updatePreview(){
+  const mt=getMT(cur);
+  document.getElementById('spreview').textContent=mt.length
+    ?mt.map(x=>x.label).join(' · '):'タグ未設定';
+}
+function updateStats(){
+  const total=PIECES.length;
+  const tagged=PIECES.filter(p=>hasMT(p.id)).length;
+  // PIECES に含まれる曲だけを集計（古いDBキーを排除）
+  const pidSet=new Set(PIECES.map(p=>p.id));
+  const totalT=PIECES.reduce((s,p)=>s+(getMT(p.id).length),0);
+  const avg=tagged>0?(totalT/tagged).toFixed(1)+'件':'0件';
+  document.getElementById('st-total').textContent=total;
+  document.getElementById('st-tagged').textContent=tagged;
+  document.getElementById('st-tags').textContent=totalT;
+  document.getElementById('st-avg').textContent=avg;
+  document.getElementById('st-cov').textContent=Math.round(tagged/total*100)+'%';
+}
+function doSave(){
+  saveDB();renderList();
+  const m=document.getElementById('ssmsg');
+  m.textContent='保存済み ✓';
+  setTimeout(()=>{m.textContent='';},2000);
+}
+function doExport(){
+  // モーダルを開く
+  document.getElementById('export-name').value='';
+  document.getElementById('export-msg').value='';
+  document.getElementById('msg-count').textContent='0';
+  document.getElementById('export-modal').classList.add('open');
+}
+function runExport(userName, userMsg){
+  const date=new Date().toISOString();
+  const data={
+    exportedAt:date,
+    exportedBy:userName,
+    message:userMsg||'',
+    pieces:PIECES.filter(p=>getMT(p.id).length>0).map(p=>({
+      piece:p.title,
+      id:p.id,
+      composer:p.cmp,
+      annotations:[{
+        user:userName,
+        tags:getMT(p.id).map(x=>({id:x.id,label:x.label}))
+      }]
+    }))
+  };
+  // ① JSONファイルをダウンロード
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  const fname='kcpo-tags-'+userName+'-'+new Date().toISOString().slice(0,10)+'.json';
+  a.download=fname;
+  a.click();URL.revokeObjectURL(a.href);
+
+  // ② メールアプリを開く（宛先・件名・本文を自動入力）
+  setTimeout(function(){
+    var tagged=data.pieces;
+    var subject=encodeURIComponent('【KCPOタグ付け結果】'+userName+' '+new Date().toISOString().slice(0,10));
+    // 本文: 名前・メッセージ・曲ごとのタグ一覧（ラベル形式）
+    var lines=[];
+    lines.push('差出人: '+userName);
+    if(userMsg)lines.push('メッセージ: '+userMsg);
+    lines.push('');
+    lines.push('■ タグ付け結果（'+tagged.length+'曲）');
+    lines.push('');
+    tagged.forEach(function(p){
+      var labels=p.annotations[0].tags.map(function(t){return t.label;}).join(' / ');
+      lines.push('▶ '+p.composer+' '+p.piece);
+      lines.push('  '+labels);
+      lines.push('');
+    });
+    lines.push('---');
+    lines.push('添付ファイル名: '+fname);
+    lines.push('（JSONファイルをこのメールに添付してください）');
+    var body=encodeURIComponent(lines.join('\n'));
+    // mailto: は本文が長すぎるとブラウザが切り捨てるため2000文字で制限
+    var bodyStr=lines.join('\n');
+    if(bodyStr.length>2000){
+      var short=[];
+      short.push('差出人: '+userName);
+      if(userMsg)short.push('メッセージ: '+userMsg);
+      short.push('');
+      short.push('タグ付け完了: '+tagged.length+'曲');
+      short.push('詳細はダウンロードしたJSONファイルをご確認ください。');
+      short.push('（添付してください: '+fname+'）');
+      body=encodeURIComponent(short.join('\n'));
+    }
+    window.location.href='mailto:clarinetist3@gmail.com?subject='+subject+'&body='+body;
+  },800);
+}
+
+async function proposeAI(){
+  if(!cur){alert('曲を選択してください');return;}
+  let key=(localStorage.getItem('kcpo-api-key')||'').trim();
+  if(!key){key=(prompt('Anthropic APIキーを入力:')||'').trim();if(!key)return;localStorage.setItem('kcpo-api-key',key);}
+  const p=PIECES.find(x=>x.id===cur);
+  const st=document.getElementById('ai-st');
+  if(st)st.textContent='AIが分析中…';
+  const tagList=CATS.flatMap(c=>c.core.map(t=>'{"category":"'+c.name+'","tag":"'+t+'"}')).join(',\n');
+  const sys='あなたはKCPOの選曲分類補助AIです。以下の制約を必ず守ってください：\n'
+    +'1. タグは下記「使用可能タグリスト」に含まれるものだけを選択すること\n'
+    +'2. 新しいタグの作成・提案は絶対に禁止\n'
+    +'3. 回答はJSON形式のみ。説明文不要\n'
+    +'4. 10〜15個のタグを選ぶこと\n\n'
+    +'使用可能タグリスト（このリスト外のタグは使用不可）:\n['+tagList+']';
+  const usr='楽曲「'+p.title+'」（作曲家:'+(p.en||p.cmp)+'、演奏時間:'+p.dur+'分）にふさわしい意味タグを上記リストから10〜15個選んでください。\n'
+    +'回答形式: {"tags":[{"category":"感情","tag":"崇高"}, ...]}';
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:sys,messages:[{role:'user',content:usr}]})
+    });
+    const d=await res.json();
+    const txt=(d.content?.[0]?.text||'').trim();
+    const m=txt.match(/\{[\s\S]*\}/);
+    if(!m)throw new Error('JSON形式で応答がありませんでした');
+    const parsed=JSON.parse(m[0]);
+    const rawTags=(parsed.tags||[]).map(x=>({c:x.category,t:x.tag}));
+    aiProp=rawTags.filter(x=>VALID_TAG_SET.has(x.c+'::'+x.t));
+    const rejected=rawTags.length-aiProp.length;
+    if(!DB[cur])DB[cur]=[];
+    let added=0;
+    aiProp.forEach(x=>{if(!isOn(cur,x.c,x.t)){DB[cur].push({c:x.c,t:x.t});added++;}});
+    saveDB();renderTags();updatePreview();updateStats();
+    let msg=added+'個のタグを追加しました ✓';
+    if(rejected>0)msg+='（未定義タグ'+rejected+'件を除外）';
+    if(st)st.textContent=msg;
+  }catch(err){
+    if(st)st.textContent='エラー: '+err.message;
+  }
+}
+
+document.getElementById('qi').addEventListener('input',renderList);
+document.getElementById('f-all').addEventListener('click',()=>setF(''));
+document.getElementById('f-tagged').addEventListener('click',()=>setF('tagged'));
+document.getElementById('f-none').addEventListener('click',()=>setF('none'));
+document.getElementById('f-sym').addEventListener('click',()=>setF('sym'));
+document.getElementById('btn-ai').addEventListener('click',proposeAI);
+document.getElementById('btn-save').addEventListener('click',doSave);
+document.getElementById('btn-save2').addEventListener('click',doSave);
+document.getElementById('btn-export').addEventListener('click',doExport);
+document.getElementById('modal-cancel').addEventListener('click',function(){
+  document.getElementById('export-modal').classList.remove('open');
+});
+document.getElementById('export-modal').addEventListener('click',function(e){
+  if(e.target===this)this.classList.remove('open');
+});
+document.getElementById('export-msg').addEventListener('input',function(){
+  document.getElementById('msg-count').textContent=this.value.length;
+});
+document.getElementById('modal-ok').addEventListener('click',function(){
+  const name=document.getElementById('export-name').value.trim();
+  if(!name){
+    document.getElementById('export-name').style.borderColor='#c0624a';
+    document.getElementById('export-name').focus();
+    return;
+  }
+  document.getElementById('export-name').style.borderColor='';
+  const msg=document.getElementById('export-msg').value.trim();
+  document.getElementById('export-modal').classList.remove('open');
+  runExport(name,msg);
+});
+
+// ── パネルリサイザー（Pointer Events API / iOS対応） ──
+(function(){
+  var rz=document.getElementById('resizer');
+  var lp=document.querySelector('.left');
+  var dragging=false, startX=0, startW=0;
+
+  function onDown(e){
+    e.preventDefault();
+    dragging=true;
+    startX=(e.touches?e.touches[0]:e).clientX;
+    startW=lp.offsetWidth;
+    rz.classList.add('dragging');
+    document.body.style.userSelect='none';
+    document.body.style.webkitUserSelect='none';
+    document.body.style.cursor='col-resize';
+  }
+  function onMove(e){
+    if(!dragging)return;
+    e.preventDefault();
+    var cx=(e.touches?e.touches[0]:e).clientX;
+    var w=Math.max(80,Math.min(400,startW+(cx-startX)));
+    lp.style.width=w+'px';
+  }
+  function onUp(){
+    if(!dragging)return;
+    dragging=false;
+    rz.classList.remove('dragging');
+    document.body.style.userSelect='';
+    document.body.style.webkitUserSelect='';
+    document.body.style.cursor='';
+  }
+
+  // マウス
+  rz.addEventListener('mousedown', onDown);
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+
+  // タッチ（passive:false でスクロール抑制、rz上のみで登録）
+  rz.addEventListener('touchstart', onDown, {passive:false});
+  rz.addEventListener('touchmove',  onMove, {passive:false});
+  rz.addEventListener('touchend',   onUp,   {passive:false});
+})();
+
+loadDB();renderList();updateStats();
+</script>
+</body>
+</html>
