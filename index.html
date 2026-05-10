@@ -99,7 +99,8 @@ body{font-family:var(--font-ja);background:#f5f5f7;color:#1d1d1f;font-size:13px;
     <div style="font-size:11px;color:#aeaeb2;margin-bottom:14px;line-height:1.6">&#9993; 端末にダウンロードされたJSONファイルをメールに添付して下さい</div>
     <div class="modal-actions">
       <button class="btn" id="modal-cancel">キャンセル</button>
-      <button class="btn btn-primary" id="modal-ok">添付してメールを送る</button>
+      <button class="btn btn-primary" id="modal-dl">ダウンロード</button>
+      <button class="btn btn-primary" id="modal-ok" disabled style="opacity:.4;cursor:not-allowed">添付してメールを送る</button>
     </div>
   </div>
 </div>
@@ -1095,31 +1096,51 @@ function doExport(){
   document.getElementById('export-name').value='';
   document.getElementById('export-msg').value='';
   document.getElementById('msg-count').textContent='0';
+  // メールボタンをリセット（ダウンロード先行が必要）
+  _dlDone=false;
+  var okBtn=document.getElementById('modal-ok');
+  okBtn.disabled=true; okBtn.style.opacity='.4'; okBtn.style.cursor='not-allowed';
   document.getElementById('export-modal').classList.add('open');
 }
-function runExport(userName, userMsg){
+// 共通データ生成
+function buildExportData(userName, userMsg){
   const date=new Date().toISOString();
-  const data={
-    exportedAt:date,
-    exportedBy:userName,
-    message:userMsg||'',
-    pieces:PIECES.filter(p=>getMT(p.id).length>0).map(p=>({
-      piece:p.title,
-      id:p.id,
-      composer:p.cmp,
-      annotations:[{
-        user:userName,
-        tags:getMT(p.id).map(x=>({id:x.id,label:x.label}))
-      }]
-    }))
+  return {
+    data:{
+      exportedAt:date,
+      exportedBy:userName,
+      message:userMsg||'',
+      pieces:PIECES.filter(p=>getMT(p.id).length>0).map(p=>({
+        piece:p.title,
+        id:p.id,
+        composer:p.cmp,
+        annotations:[{
+          user:userName,
+          tags:getMT(p.id).map(x=>({id:x.id,label:x.label}))
+        }]
+      }))
+    },
+    fname:'kcpo-tags-'+userName+'-'+date.slice(0,10)+'.json'
   };
-  // ① JSONファイルをダウンロード
+}
+// ダウンロードのみ
+function runDownload(userName, userMsg){
+  const {data,fname}=buildExportData(userName,userMsg);
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  const fname='kcpo-tags-'+userName+'-'+new Date().toISOString().slice(0,10)+'.json';
   a.download=fname;
   a.click();URL.revokeObjectURL(a.href);
+  // 次のmailto用にファイル名を保持
+  runDownload._lastFname=fname;
+  runDownload._lastUser=userName;
+  runDownload._lastMsg=userMsg;
+}
+// メール起動のみ
+function runMailto(userName, userMsg){
+  const fname=runDownload._lastFname||('kcpo-tags-'+userName+'.json');
+  const {data}=buildExportData(userName,userMsg);
+  const tagged=data.pieces;
 
   // ② メールアプリを開く（宛先・件名・本文を自動入力）
   setTimeout(function(){
@@ -1218,7 +1239,30 @@ document.getElementById('export-modal').addEventListener('click',function(e){
 document.getElementById('export-msg').addEventListener('input',function(){
   document.getElementById('msg-count').textContent=this.value.length;
 });
+// ダウンロード済みフラグ
+var _dlDone=false;
+
+document.getElementById('modal-dl').addEventListener('click',function(){
+  const name=document.getElementById('export-name').value.trim();
+  if(!name){
+    document.getElementById('export-name').style.borderColor='#c0624a';
+    document.getElementById('export-name').focus();
+    return;
+  }
+  document.getElementById('export-name').style.borderColor='';
+  const msg=document.getElementById('export-msg').value.trim();
+  // JSONダウンロードのみ実行
+  runDownload(name,msg);
+  // ダウンロード済みフラグを立てメールボタンを有効化
+  _dlDone=true;
+  const okBtn=document.getElementById('modal-ok');
+  okBtn.disabled=false;
+  okBtn.style.opacity='';
+  okBtn.style.cursor='';
+});
+
 document.getElementById('modal-ok').addEventListener('click',function(){
+  if(!_dlDone)return;
   const name=document.getElementById('export-name').value.trim();
   if(!name){
     document.getElementById('export-name').style.borderColor='#c0624a';
@@ -1228,7 +1272,7 @@ document.getElementById('modal-ok').addEventListener('click',function(){
   document.getElementById('export-name').style.borderColor='';
   const msg=document.getElementById('export-msg').value.trim();
   document.getElementById('export-modal').classList.remove('open');
-  runExport(name,msg);
+  runMailto(name,msg);
 });
 
 // ── パネルリサイザー（Pointer Events API / iOS対応） ──
