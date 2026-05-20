@@ -37,6 +37,12 @@ body{font-family:var(--font-ja);background:#f5f5f7;color:#1d1d1f;font-size:13px;
 .btn{padding:5px 12px;border:.5px solid #c7c7cc;border-radius:8px;background:transparent;color:#6e6e73;font-size:12px;font-family:var(--font-ja);cursor:pointer}
 .btn:hover{background:#f9f9fb}
 .btn-primary{background:#639922;color:#173404;border-color:#639922;font-weight:500}
+.btn-save-soft{background:#a8c97a;color:#2d4a10;border-color:#a8c97a;font-weight:500}
+.btn-save-soft:hover{background:#8fb85e;border-color:#8fb85e}
+.btn-export-primary{background:#185FA5;color:#fff;border-color:#185FA5;font-weight:500}
+.btn-export-primary:hover{background:#0f4a80;border-color:#0f4a80}
+.btn-send{background:#185FA5;color:#fff;border-color:#185FA5;font-weight:500}
+.btn-send:hover{background:#0f4a80;border-color:#0f4a80}
 .btn-primary:hover{background:#3B6D11;color:#C0DD97}
 .btn-ai{background:#e8f0fb;color:#185FA5;border-color:transparent}
 .stat-row{display:flex;gap:16px;padding:8px 16px;border-bottom:.5px solid #d2d2d7;flex-shrink:0;background:#f9f9fb}
@@ -49,6 +55,11 @@ body{font-family:var(--font-ja);background:#f5f5f7;color:#1d1d1f;font-size:13px;
 .piece-title{font-size:17px;font-weight:500;color:#1d1d1f;line-height:1.3;margin-bottom:6px}
 .piece-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
 .badge{padding:2px 8px;border-radius:20px;font-size:11px;border:.5px solid #c7c7cc;color:#6e6e73}
+.stream-links{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.sl-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:11px;font-family:var(--font-ja);font-weight:500;text-decoration:none;border:.5px solid;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.sl-yt{background:#fff0f0;border-color:#e8453c;color:#c0392b}
+.sl-sp{background:#f0fff4;border-color:#1db954;color:#1a7a3c}
+.sl-am{background:#f0f4ff;border-color:#fc3c44;color:#c0202a}
 .badge.yr{border-color:#b8d4f5;color:#185FA5}
 .etags-sec{margin-bottom:14px}
 .etags-label{font-size:11px;color:#aeaeb2;margin-bottom:5px;font-weight:500}
@@ -70,6 +81,8 @@ body{font-family:var(--font-ja);background:#f5f5f7;color:#1d1d1f;font-size:13px;
 .add-cat-wrap button:hover{background:#f9f9fb;color:#6e6e73}
 .save-bar{padding:10px 16px;border-top:.5px solid #d2d2d7;display:flex;align-items:center;gap:10px;flex-shrink:0;background:#fff}
 .save-preview{flex:1;font-size:11px;color:#aeaeb2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.more-tags-btn{display:inline-block;margin-top:6px;padding:0;border:none;background:none;color:#aeaeb2;font-size:11px;font-family:var(--font-ja);cursor:pointer;letter-spacing:.02em}
+.more-tags-btn:hover{color:#639922}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#c7c7cc;border-radius:2px}
 
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center}
@@ -96,11 +109,15 @@ body{font-family:var(--font-ja);background:#f5f5f7;color:#1d1d1f;font-size:13px;
     <div class="modal-label">メッセージ（任意）</div>
     <textarea class="modal-textarea" id="export-msg" placeholder="自由にどうぞ" maxlength="200"></textarea>
     <div class="modal-count"><span id="msg-count">0</span> / 200</div>
-    <div style="font-size:11px;color:#aeaeb2;margin-bottom:14px;line-height:1.6">&#9993; 端末にダウンロードされたJSONファイルをメールに添付して下さい</div>
-    <div class="modal-actions">
+    <div style="font-size:11px;color:#aeaeb2;margin-bottom:14px;line-height:1.6">&#9993; 送信データはスプレッドシートに自動保存されます</div>
+    <div class="modal-actions" id="modal-actions">
       <button class="btn" id="modal-cancel">キャンセル</button>
-      <button class="btn btn-primary" id="modal-dl">ダウンロード</button>
-      <button class="btn btn-primary" id="modal-ok" disabled style="opacity:.4;cursor:not-allowed">添付してメールを送る</button>
+      <button class="btn btn-send" id="modal-ok">タグデータを送る</button>
+    </div>
+    <div id="modal-thanks" style="display:none;text-align:center;padding:16px 0 4px">
+      <div style="font-size:22px;margin-bottom:8px">🎶</div>
+      <div style="font-size:15px;font-weight:600;color:#185FA5;margin-bottom:6px">送信ありがとうございます！</div>
+      <div style="font-size:12px;color:#6e6e73">データを受け取りました。</div>
     </div>
   </div>
 </div>
@@ -126,8 +143,8 @@ body{font-family:var(--font-ja);background:#f5f5f7;color:#1d1d1f;font-size:13px;
       <div class="top-actions">
         <span class="ss-msg" id="ssmsg"></span>
         <button class="btn btn-ai" id="btn-ai" style="display:none">AI提案</button>
-        <button class="btn btn-primary" id="btn-save">保存</button>
-        <button class="btn" id="btn-export">タグ付結果をメール</button>
+        <button class="btn btn-save-soft" id="btn-save">保存</button>
+        <button class="btn btn-export-primary" id="btn-export">タグデータを送る</button>
       </div>
     </div>
     <div class="stat-row">
@@ -147,7 +164,7 @@ body{font-family:var(--font-ja);background:#f5f5f7;color:#1d1d1f;font-size:13px;
     </div>
     <div class="save-bar">
       <div class="save-preview" id="spreview">タグ未設定</div>
-      <button class="btn btn-primary" id="btn-save2">保存</button>
+      <button class="btn btn-save-soft" id="btn-save2">保存</button>
     </div>
   </div>
 </div>
@@ -160,39 +177,235 @@ body{font-family:var(--font-ja);background:#f5f5f7;color:#1d1d1f;font-size:13px;
 // 4. 基礎・編成 に11タグ追加
 // 5. 基礎・難易度 を5段階に全置換
 // ============================================================
-const TAG_LABEL={'emotion_sublime':'崇高','emotion_nostalgia':'郷愁','emotion_serenity':'静寂','emotion_ecstasy':'熱狂','emotion_unease':'不穏','emotion_hope':'希望','emotion_despair':'絶望','emotion_rapture':'陶酔','emotion_mystery':'神秘','emotion_melancholy':'憂鬱','emotion_trance':'恍惚','emotion_elation':'高揚','emotion_festivity':'祝祭','emotion_love':'愛','emotion_longing':'憧れ','emotion_solitude':'孤独','emotion_sensuality':'官能','emotion_violence':'暴力','emotion_transcendence':'超越','space_city':'都市','space_church':'教会','space_ocean':'海','space_forest':'森','space_battlefield':'戦場','space_foreign_land':'異国','space_cosmos':'宇宙','space_mountain':'山岳','space_court':'宮廷','space_ruin':'廃墟','space_nature':'自然','space_underground':'地下','space_river':'河川','brand_intellectual':'知的','brand_challenging':'挑戦的','brand_colorful':'色彩的','brand_philosophical':'哲学的','brand_narrative':'物語性','brand_discovery':'発見型','brand_large_scale':'巨大編成','brand_high_energy':'熱量型','brand_spirituality':'精神性','brand_reinterpretation':'王道再解釈','brand_contextual':'文脈型','audience_accessible':'初心者向け','audience_overwhelming':'圧倒系','audience_moving':'泣ける','audience_intellectual_pleasure':'知的快感','audience_immersive':'没入感','audience_impactful':'一撃性','audience_addictive':'中毒性','audience_lingering':'余韻型','audience_photogenic':'SNS映え','audience_storytelling':'ストーリー性','audience_atmospheric':'空気感型','audience_family_friendly':'ファミリー向け','audience_memorial':'メモリアル','audience_familiar':'聞いたことある','audience_heartfelt':'心に沁みる','audience_classic_choice':'王道','performer_brass_fun':'金管楽しい','performer_woodwind_fun':'木管楽しい','performer_strings_fun':'弦楽器楽しい','performer_percussion_fun':'打楽器楽しい','performer_solo_satisfaction':'ソロ快感','performer_harmony_pleasure':'ハーモニー快感','performer_high_achievement':'達成感大','performer_ensemble_difficulty':'アンサンブル難','performer_stamina_demanding':'スタミナ戦','performer_mental_focus':'精神集中','performer_disciplined':'修行型','performer_explosive':'爆発型','performer_many_notes':'細かい音符','performer_many_difficulties':'難所多い','performer_loud_sound':'大音量サウンド','performer_pleasant_melody':'気持ちいいメロディ','concept_faith':'信仰','concept_ethnicity':'民族','concept_death':'死','concept_civilization':'文明','concept_journey':'旅','concept_homeland':'故郷','concept_empire':'帝国','concept_revolution':'革命','concept_nature_worship':'自然崇拝','concept_individual_society':'個人と社会','concept_heroism':'英雄','concept_community':'共同体','concept_war':'戦争','concept_memory':'記憶','concept_urbanization':'都市化','concept_mechanization':'機械文明','concept_ritualism':'儀式性','body_dance':'舞踏','body_march':'行進','body_breath':'呼吸','body_ritual':'儀式','body_wave':'波動','body_flow':'流動','body_gravity':'重力','body_levitation':'浮遊','time_youth':'青春','time_reminiscence':'回想','time_eternity':'永遠','time_apocalypse':'終末','time_twilight':'黄昏','time_history':'歴史','time_dawn':'夜明け','time_seasons':'季節','time_cycle':'循環','light_radiance':'光','light_night':'夜','light_darkness':'闇','light_blue':'青','light_gold':'金色','light_transparency':'透明感','light_shadow':'陰影','light_dusk':'夕暮れ','light_vivid_color':'極彩色','era_pre_baroque':'バロック以前','era_classical':'古典','era_early_romantic':'初期ロマン','era_late_romantic':'後期ロマン','era_fin_de_siecle':'世紀末','era_20th_century':'20世紀','era_contemporary':'現代','inst_double_wind':'2管','inst_triple_wind':'3管','inst_quadruple_wind':'4管','inst_chorus':'合唱','inst_vocal_solo':'独唱','inst_organ':'オルガン','inst_offstage':'舞台裏','inst_special':'特殊楽器','inst_strings_only':'弦のみ','inst_winds_only':'管打のみ','inst_strings_woodwind':'弦＋木管','inst_strings_brass':'弦＋金管','inst_strings_perc':'弦＋打','inst_trombone':'トロンボーン','inst_tuba':'チューバ','inst_harp':'ハープ','inst_piano':'ピアノ','inst_celesta':'チェレスタ','inst_perc_up_to_3':'パーカッション3名以内','inst_perc_4_or_more':'パーカッション4名以上','level_junior':'ジュニアオケ','level_student':'学生オケ','level_amateur_basic':'社会人オケ初級','level_amateur_advanced':'社会人オケ上級','level_professional':'プロオケ','region_germany_austria':'ドイツ・オーストリア','region_france':'フランス','region_italy':'イタリア','region_spain':'スペイン','region_nordic':'北欧','region_eastern_europe':'東欧','region_russia':'ロシア','region_uk_us':'英米','region_latin_america':'中南米','region_asia':'アジア','freq_iconic':'超有名','freq_well_known':'有名','freq_standard':'中堅','freq_rare':'稀少','freq_unperformed':'未演奏級'};
+const TAG_LABEL={
+  'space_sanctuary':'聖域',
+  'space_city':'都市',
+  'space_sea':'海',
+  'space_ruins':'廃墟',
+  'space_cosmos':'宇宙',
+  'space_forest':'森',
+  'space_battlefield':'戦場',
+  'space_foreign_land':'異国',
+  'space_mountain':'山岳',
+  'space_palace':'宮廷',
+  'space_nature':'自然',
+  'space_underground':'地下',
+  'space_river':'河川',
+  'space_church':'教会',
+  'audience_overwhelming':'圧倒系',
+  'audience_moving':'泣ける',
+  'audience_immersive':'没入感',
+  'audience_lingering':'余韻型',
+  'audience_heartfelt':'心に沁みる',
+  'audience_beginner':'初心者向け',
+  'audience_intellectual':'知的快感',
+  'audience_impactful':'一撃性',
+  'audience_addictive':'中毒性',
+  'audience_sns':'SNS映え',
+  'audience_storytelling':'ストーリー性',
+  'audience_atmospheric':'空気感型',
+  'audience_family_friendly':'ファミリー向け',
+  'audience_memorial':'メモリアル',
+  'audience_familiar':'聞いたことある',
+  'audience_classic_choice':'王道',
+  'audience_want_to_share':'共有したい',
+  'audience_breathless':'呼吸を忘れる',
+  'time_dusk':'黄昏',
+  'time_eternity':'永遠',
+  'time_cycle':'循環',
+  'time_ending':'終末',
+  'time_dawn':'夜明け',
+  'time_youth':'青春',
+  'time_reminiscence':'回想',
+  'time_history':'歴史',
+  'time_season':'季節',
+  'time_stagnation':'停滞',
+  'time_moment':'瞬間',
+  'time_disappearance':'消失',
+  'time_acceleration':'加速',
+  'time_return':'回帰',
+  'emotion_sublime':'崇高',
+  'emotion_prayer':'祈り',
+  'emotion_nostalgia':'郷愁',
+  'emotion_elation':'高揚',
+  'emotion_solitude':'孤独',
+  'emotion_serenity':'静寂',
+  'emotion_ecstasy':'熱狂',
+  'emotion_unease':'不穏',
+  'emotion_hope':'希望',
+  'emotion_despair':'絶望',
+  'emotion_rapture':'陶酔',
+  'emotion_mystery':'神秘',
+  'emotion_melancholy':'憂鬱',
+  'emotion_trance':'恍惚',
+  'emotion_festivity':'祝祭',
+  'emotion_love':'愛',
+  'emotion_longing':'憧れ',
+  'emotion_sensuality':'官能',
+  'emotion_violence':'暴力',
+  'emotion_transcendence':'超越',
+  'emotion_tension':'緊張',
+  'emotion_release':'解放',
+  'light_light':'光',
+  'light_darkness':'闇',
+  'light_night':'夜',
+  'light_silence':'静寂',
+  'light_transparency':'透明感',
+  'light_blue':'青',
+  'light_gold':'金色',
+  'light_shadow':'陰影',
+  'light_twilight':'夕暮れ',
+  'light_vivid':'極彩色',
+  'brand_intellectual':'知的',
+  'brand_challenging':'挑戦的',
+  'brand_colorful':'色彩的',
+  'brand_narrative':'物語性',
+  'brand_spiritual':'精神性',
+  'brand_philosophical':'哲学的',
+  'brand_discovery':'発見型',
+  'brand_large_scale':'巨大編成',
+  'brand_high_energy':'熱量型',
+  'brand_reinterpretation':'王道再解釈',
+  'brand_contextual':'文脈型',
+  'performer_high_achievement':'達成感大',
+  'performer_explosive':'爆発型',
+  'performer_mental_focus':'精神集中',
+  'performer_harmony_pleasure':'ハーモニー快感',
+  'performer_pleasant_melody':'気持ちいいメロディ',
+  'performer_brass_fun':'金管楽しい',
+  'performer_woodwind_fun':'木管楽しい',
+  'performer_strings_fun':'弦楽器楽しい',
+  'performer_percussion_fun':'打楽器楽しい',
+  'performer_solo_satisfaction':'ソロ快感',
+  'performer_ensemble_difficulty':'アンサンブル難',
+  'performer_stamina_demanding':'スタミナ戦',
+  'performer_disciplined':'修行型',
+  'performer_many_notes':'細かい音符',
+  'performer_many_difficulties':'難所多い',
+  'performer_loud_sound':'大音量サウンド',
+  'concept_faith':'信仰',
+  'concept_ethnicity':'民族',
+  'concept_death':'死',
+  'concept_heroism':'英雄',
+  'concept_war':'戦争',
+  'concept_civilization':'文明',
+  'concept_journey':'旅',
+  'concept_homeland':'故郷',
+  'concept_empire':'帝国',
+  'concept_revolution':'革命',
+  'concept_nature_worship':'自然崇拝',
+  'concept_individual_society':'個人と社会',
+  'concept_community':'共同体',
+  'concept_memory':'記憶',
+  'concept_urbanization':'都市化',
+  'concept_mechanization':'機械文明',
+  'concept_ritualism':'儀式性',
+  'body_dance':'舞踏',
+  'body_march':'行進',
+  'body_breath':'呼吸',
+  'body_pulse':'脈動',
+  'body_pressure':'重圧',
+  'body_ritual':'儀式',
+  'body_wave':'波動',
+  'body_flow':'流動',
+  'body_gravity':'重力',
+  'body_float':'浮遊',
+  'era_pre_baroque':'バロック以前',
+  'era_classical':'古典',
+  'era_early_romantic':'初期ロマン',
+  'era_late_romantic':'後期ロマン',
+  'era_fin_de_siecle':'世紀末',
+  'era_20th_century':'20世紀',
+  'era_contemporary':'現代',
+  'inst_double_wind':'2管',
+  'inst_triple_wind':'3管',
+  'inst_quadruple_wind':'4管',
+  'inst_chorus':'合唱',
+  'inst_vocal_solo':'独唱',
+  'inst_organ':'オルガン',
+  'inst_offstage':'舞台裏',
+  'inst_special':'特殊楽器',
+  'inst_strings_only':'弦のみ',
+  'inst_winds_perc_only':'管打のみ',
+  'inst_str_woodwind':'弦＋木管',
+  'inst_str_brass':'弦＋金管',
+  'inst_str_perc':'弦＋打',
+  'inst_trombone':'トロンボーン',
+  'inst_tuba':'チューバ',
+  'inst_harp':'ハープ',
+  'inst_piano':'ピアノ',
+  'inst_celesta':'チェレスタ',
+  'inst_perc_up_to_3':'パーカッション3名以内',
+  'inst_perc_4_or_more':'パーカッション4名以上',
+  'level_junior':'ジュニアオケ',
+  'level_student':'学生オケ',
+  'level_amateur_basic':'社会人オケ初級',
+  'level_amateur_adv':'社会人オケ上級',
+  'level_pro':'プロオケ',
+  'region_germany_austria':'ドイツ・オーストリア',
+  'region_france':'フランス',
+  'region_russia':'ロシア',
+  'region_nordic':'北欧',
+  'region_uk_us':'英米',
+  'region_italy':'イタリア',
+  'region_spain':'スペイン',
+  'region_eastern_europe':'東欧',
+  'region_latin_america':'中南米',
+  'region_asia':'アジア',
+  'freq_well_known':'超有名',
+  'freq_known':'有名',
+  'freq_moderate':'中堅',
+  'freq_rare':'稀少',
+  'freq_unperformed':'未演奏級'
+};
 const CATS = [
-  {id:'emo', name:'感情', dv:true,  v:true,
-   core:[{id:'emotion_sublime',label:'崇高'},{id:'emotion_nostalgia',label:'郷愁'},{id:'emotion_serenity',label:'静寂'},{id:'emotion_ecstasy',label:'熱狂'},{id:'emotion_unease',label:'不穏'},{id:'emotion_hope',label:'希望'},{id:'emotion_despair',label:'絶望'},{id:'emotion_rapture',label:'陶酔'},{id:'emotion_mystery',label:'神秘'},{id:'emotion_melancholy',label:'憂鬱'},{id:'emotion_trance',label:'恍惚'},{id:'emotion_elation',label:'高揚'},{id:'emotion_festivity',label:'祝祭'},{id:'emotion_love',label:'愛'},{id:'emotion_longing',label:'憧れ'},{id:'emotion_solitude',label:'孤独'},{id:'emotion_sensuality',label:'官能'},{id:'emotion_violence',label:'暴力'},{id:'emotion_transcendence',label:'超越'}]},
-  {id:'space', name:'空間', dv:false, v:false,
-   core:[{id:'space_city',label:'都市'},{id:'space_church',label:'教会'},{id:'space_ocean',label:'海'},{id:'space_forest',label:'森'},{id:'space_battlefield',label:'戦場'},{id:'space_foreign_land',label:'異国'},{id:'space_cosmos',label:'宇宙'},{id:'space_mountain',label:'山岳'},{id:'space_court',label:'宮廷'},{id:'space_ruin',label:'廃墟'},{id:'space_nature',label:'自然'},{id:'space_underground',label:'地下'},{id:'space_river',label:'河川'}]},
-  {id:'brand', name:'オーケストラブランディング', dv:true,  v:true,
-   core:[{id:'brand_intellectual',label:'知的'},{id:'brand_challenging',label:'挑戦的'},{id:'brand_colorful',label:'色彩的'},{id:'brand_philosophical',label:'哲学的'},{id:'brand_narrative',label:'物語性'},{id:'brand_discovery',label:'発見型'},{id:'brand_large_scale',label:'巨大編成'},{id:'brand_high_energy',label:'熱量型'},{id:'brand_spirituality',label:'精神性'},{id:'brand_reinterpretation',label:'王道再解釈'},{id:'brand_contextual',label:'文脈型'}]},
-  {id:'aud', name:'観客体験', dv:true,  v:true,
-   core:[{id:'audience_accessible',label:'初心者向け'},{id:'audience_overwhelming',label:'圧倒系'},{id:'audience_moving',label:'泣ける'},{id:'audience_intellectual_pleasure',label:'知的快感'},{id:'audience_immersive',label:'没入感'},{id:'audience_impactful',label:'一撃性'},{id:'audience_addictive',label:'中毒性'},{id:'audience_lingering',label:'余韻型'},{id:'audience_photogenic',label:'SNS映え'},{id:'audience_storytelling',label:'ストーリー性'},{id:'audience_atmospheric',label:'空気感型'},{id:'audience_family_friendly',label:'ファミリー向け'},{id:'audience_memorial',label:'メモリアル'},{id:'audience_familiar',label:'聞いたことある'},{id:'audience_heartfelt',label:'心に沁みる'},{id:'audience_classic_choice',label:'王道'}]},
-  {id:'ens', name:'団員体験', dv:true,  v:true,
-   core:[{id:'performer_brass_fun',label:'金管楽しい'},{id:'performer_woodwind_fun',label:'木管楽しい'},{id:'performer_strings_fun',label:'弦楽器楽しい'},{id:'performer_percussion_fun',label:'打楽器楽しい'},{id:'performer_solo_satisfaction',label:'ソロ快感'},{id:'performer_harmony_pleasure',label:'ハーモニー快感'},{id:'performer_high_achievement',label:'達成感大'},{id:'performer_ensemble_difficulty',label:'アンサンブル難'},{id:'performer_stamina_demanding',label:'スタミナ戦'},{id:'performer_mental_focus',label:'精神集中'},{id:'performer_disciplined',label:'修行型'},{id:'performer_explosive',label:'爆発型'},{id:'performer_many_notes',label:'細かい音符'},{id:'performer_many_difficulties',label:'難所多い'},{id:'performer_loud_sound',label:'大音量サウンド'},{id:'performer_pleasant_melody',label:'気持ちいいメロディ'}]},
-  {id:'idea', name:'思想', dv:false, v:false,
-   core:[{id:'concept_faith',label:'信仰'},{id:'concept_ethnicity',label:'民族'},{id:'concept_death',label:'死'},{id:'concept_civilization',label:'文明'},{id:'concept_journey',label:'旅'},{id:'concept_homeland',label:'故郷'},{id:'concept_empire',label:'帝国'},{id:'concept_revolution',label:'革命'},{id:'concept_nature_worship',label:'自然崇拝'},{id:'concept_individual_society',label:'個人と社会'},{id:'concept_heroism',label:'英雄'},{id:'concept_community',label:'共同体'},{id:'concept_war',label:'戦争'},{id:'concept_memory',label:'記憶'},{id:'concept_urbanization',label:'都市化'},{id:'concept_mechanization',label:'機械文明'},{id:'concept_ritualism',label:'儀式性'}]},
-  {id:'body', name:'身体性', dv:false, v:false,
-   core:[{id:'body_dance',label:'舞踏'},{id:'body_march',label:'行進'},{id:'body_breath',label:'呼吸'},{id:'body_ritual',label:'儀式'},{id:'body_wave',label:'波動'},{id:'body_flow',label:'流動'},{id:'body_gravity',label:'重力'},{id:'body_levitation',label:'浮遊'}]},
-  {id:'time', name:'時間感覚', dv:false, v:false,
-   core:[{id:'time_youth',label:'青春'},{id:'time_reminiscence',label:'回想'},{id:'time_eternity',label:'永遠'},{id:'time_apocalypse',label:'終末'},{id:'time_twilight',label:'黄昏'},{id:'time_history',label:'歴史'},{id:'time_dawn',label:'夜明け'},{id:'time_seasons',label:'季節'},{id:'time_cycle',label:'循環'}]},
-  {id:'light', name:'光・色彩', dv:false, v:false,
-   core:[{id:'light_radiance',label:'光'},{id:'light_night',label:'夜'},{id:'light_darkness',label:'闇'},{id:'light_blue',label:'青'},{id:'light_gold',label:'金色'},{id:'light_transparency',label:'透明感'},{id:'light_shadow',label:'陰影'},{id:'light_dusk',label:'夕暮れ'},{id:'light_vivid_color',label:'極彩色'}]},
-  {id:'era', name:'基礎・時代', dv:false, v:false,
-   core:[{id:'era_pre_baroque',label:'バロック以前'},{id:'era_classical',label:'古典'},{id:'era_early_romantic',label:'初期ロマン'},{id:'era_late_romantic',label:'後期ロマン'},{id:'era_fin_de_siecle',label:'世紀末'},{id:'era_20th_century',label:'20世紀'},{id:'era_contemporary',label:'現代'}]},
-  {id:'inst', name:'基礎・編成', dv:false, v:false,
-   core:[{id:'inst_double_wind',label:'2管'},{id:'inst_triple_wind',label:'3管'},{id:'inst_quadruple_wind',label:'4管'},{id:'inst_chorus',label:'合唱'},{id:'inst_vocal_solo',label:'独唱'},{id:'inst_organ',label:'オルガン'},{id:'inst_offstage',label:'舞台裏'},{id:'inst_special',label:'特殊楽器'},{id:'inst_strings_only',label:'弦のみ'},{id:'inst_winds_only',label:'管打のみ'},{id:'inst_strings_woodwind',label:'弦＋木管'},{id:'inst_strings_brass',label:'弦＋金管'},{id:'inst_strings_perc',label:'弦＋打'},{id:'inst_trombone',label:'トロンボーン'},{id:'inst_tuba',label:'チューバ'},{id:'inst_harp',label:'ハープ'},{id:'inst_piano',label:'ピアノ'},{id:'inst_celesta',label:'チェレスタ'},{id:'inst_perc_up_to_3',label:'パーカッション3名以内'},{id:'inst_perc_4_or_more',label:'パーカッション4名以上'}]},
-  {id:'diff', name:'基礎・難易度', dv:false, v:false,
-   core:[{id:'level_junior',label:'ジュニアオケ'},{id:'level_student',label:'学生オケ'},{id:'level_amateur_basic',label:'社会人オケ初級'},{id:'level_amateur_advanced',label:'社会人オケ上級'},{id:'level_professional',label:'プロオケ'}]},
-  {id:'region', name:'国家・地域', dv:false, v:false,
-   core:[{id:'region_germany_austria',label:'ドイツ・オーストリア'},{id:'region_france',label:'フランス'},{id:'region_italy',label:'イタリア'},{id:'region_spain',label:'スペイン'},{id:'region_nordic',label:'北欧'},{id:'region_eastern_europe',label:'東欧'},{id:'region_russia',label:'ロシア'},{id:'region_uk_us',label:'英米'},{id:'region_latin_america',label:'中南米'},{id:'region_asia',label:'アジア'}]},
-  {id:'freq', name:'基礎・演奏頻度', dv:false, v:false,
-   core:[{id:'freq_iconic',label:'超有名'},{id:'freq_well_known',label:'有名'},{id:'freq_standard',label:'中堅'},{id:'freq_rare',label:'稀少'},{id:'freq_unperformed',label:'未演奏級'}]}
+  {id:'space',name:'空間',dv:true,v:true,
+   initial:[{id:'space_sanctuary',label:'聖域'},{id:'space_city',label:'都市'},{id:'space_sea',label:'海'},{id:'space_ruins',label:'廃墟'},{id:'space_cosmos',label:'宇宙'}],
+   rest:[{id:'space_forest',label:'森'},{id:'space_battlefield',label:'戦場'},{id:'space_foreign_land',label:'異国'},{id:'space_mountain',label:'山岳'},{id:'space_palace',label:'宮廷'},{id:'space_nature',label:'自然'},{id:'space_underground',label:'地下'},{id:'space_river',label:'河川'},{id:'space_church',label:'教会'}]},
+  {id:'aud',name:'観客体験',dv:true,v:true,
+   initial:[{id:'audience_overwhelming',label:'圧倒系'},{id:'audience_moving',label:'泣ける'},{id:'audience_immersive',label:'没入感'},{id:'audience_lingering',label:'余韻型'},{id:'audience_heartfelt',label:'心に沁みる'}],
+   rest:[{id:'audience_beginner',label:'初心者向け'},{id:'audience_intellectual',label:'知的快感'},{id:'audience_impactful',label:'一撃性'},{id:'audience_addictive',label:'中毒性'},{id:'audience_sns',label:'SNS映え'},{id:'audience_storytelling',label:'ストーリー性'},{id:'audience_atmospheric',label:'空気感型'},{id:'audience_family_friendly',label:'ファミリー向け'},{id:'audience_memorial',label:'メモリアル'},{id:'audience_familiar',label:'聞いたことある'},{id:'audience_classic_choice',label:'王道'},{id:'audience_want_to_share',label:'共有したい'},{id:'audience_breathless',label:'呼吸を忘れる'}]},
+  {id:'time',name:'時間感覚',dv:true,v:true,
+   initial:[{id:'time_dusk',label:'黄昏'},{id:'time_eternity',label:'永遠'},{id:'time_cycle',label:'循環'},{id:'time_ending',label:'終末'},{id:'time_dawn',label:'夜明け'}],
+   rest:[{id:'time_youth',label:'青春'},{id:'time_reminiscence',label:'回想'},{id:'time_history',label:'歴史'},{id:'time_season',label:'季節'},{id:'time_stagnation',label:'停滞'},{id:'time_moment',label:'瞬間'},{id:'time_disappearance',label:'消失'},{id:'time_acceleration',label:'加速'},{id:'time_return',label:'回帰'}]},
+  {id:'emo',name:'感情',dv:false,v:false,
+   initial:[{id:'emotion_sublime',label:'崇高'},{id:'emotion_prayer',label:'祈り'},{id:'emotion_nostalgia',label:'郷愁'},{id:'emotion_elation',label:'高揚'},{id:'emotion_solitude',label:'孤独'}],
+   rest:[{id:'emotion_serenity',label:'静寂'},{id:'emotion_ecstasy',label:'熱狂'},{id:'emotion_unease',label:'不穏'},{id:'emotion_hope',label:'希望'},{id:'emotion_despair',label:'絶望'},{id:'emotion_rapture',label:'陶酔'},{id:'emotion_mystery',label:'神秘'},{id:'emotion_melancholy',label:'憂鬱'},{id:'emotion_trance',label:'恍惚'},{id:'emotion_festivity',label:'祝祭'},{id:'emotion_love',label:'愛'},{id:'emotion_longing',label:'憧れ'},{id:'emotion_sensuality',label:'官能'},{id:'emotion_violence',label:'暴力'},{id:'emotion_transcendence',label:'超越'},{id:'emotion_tension',label:'緊張'},{id:'emotion_release',label:'解放'}]},
+  {id:'light',name:'光・色彩',dv:false,v:false,
+   initial:[{id:'light_light',label:'光'},{id:'light_darkness',label:'闇'},{id:'light_night',label:'夜'},{id:'light_silence',label:'静寂'},{id:'light_transparency',label:'透明感'}],
+   rest:[{id:'light_blue',label:'青'},{id:'light_gold',label:'金色'},{id:'light_shadow',label:'陰影'},{id:'light_twilight',label:'夕暮れ'},{id:'light_vivid',label:'極彩色'}]},
+  {id:'brand',name:'オーケストラブランディング',dv:false,v:false,
+   initial:[{id:'brand_intellectual',label:'知的'},{id:'brand_challenging',label:'挑戦的'},{id:'brand_colorful',label:'色彩的'},{id:'brand_narrative',label:'物語性'},{id:'brand_spiritual',label:'精神性'}],
+   rest:[{id:'brand_philosophical',label:'哲学的'},{id:'brand_discovery',label:'発見型'},{id:'brand_large_scale',label:'巨大編成'},{id:'brand_high_energy',label:'熱量型'},{id:'brand_reinterpretation',label:'王道再解釈'},{id:'brand_contextual',label:'文脈型'}]},
+  {id:'ens',name:'団員体験',dv:false,v:false,
+   initial:[{id:'performer_high_achievement',label:'達成感大'},{id:'performer_explosive',label:'爆発型'},{id:'performer_mental_focus',label:'精神集中'},{id:'performer_harmony_pleasure',label:'ハーモニー快感'},{id:'performer_pleasant_melody',label:'気持ちいいメロディ'}],
+   rest:[{id:'performer_brass_fun',label:'金管楽しい'},{id:'performer_woodwind_fun',label:'木管楽しい'},{id:'performer_strings_fun',label:'弦楽器楽しい'},{id:'performer_percussion_fun',label:'打楽器楽しい'},{id:'performer_solo_satisfaction',label:'ソロ快感'},{id:'performer_ensemble_difficulty',label:'アンサンブル難'},{id:'performer_stamina_demanding',label:'スタミナ戦'},{id:'performer_disciplined',label:'修行型'},{id:'performer_many_notes',label:'細かい音符'},{id:'performer_many_difficulties',label:'難所多い'},{id:'performer_loud_sound',label:'大音量サウンド'}]},
+  {id:'idea',name:'思想',dv:false,v:false,
+   initial:[{id:'concept_faith',label:'信仰'},{id:'concept_ethnicity',label:'民族'},{id:'concept_death',label:'死'},{id:'concept_heroism',label:'英雄'},{id:'concept_war',label:'戦争'}],
+   rest:[{id:'concept_civilization',label:'文明'},{id:'concept_journey',label:'旅'},{id:'concept_homeland',label:'故郷'},{id:'concept_empire',label:'帝国'},{id:'concept_revolution',label:'革命'},{id:'concept_nature_worship',label:'自然崇拝'},{id:'concept_individual_society',label:'個人と社会'},{id:'concept_community',label:'共同体'},{id:'concept_memory',label:'記憶'},{id:'concept_urbanization',label:'都市化'},{id:'concept_mechanization',label:'機械文明'},{id:'concept_ritualism',label:'儀式性'}]},
+  {id:'body',name:'身体性',dv:false,v:false,
+   initial:[{id:'body_dance',label:'舞踏'},{id:'body_march',label:'行進'},{id:'body_breath',label:'呼吸'},{id:'body_pulse',label:'脈動'},{id:'body_pressure',label:'重圧'}],
+   rest:[{id:'body_ritual',label:'儀式'},{id:'body_wave',label:'波動'},{id:'body_flow',label:'流動'},{id:'body_gravity',label:'重力'},{id:'body_float',label:'浮遊'}]},
+  {id:'era',name:'基礎・時代',dv:false,v:false,
+   initial:[{id:'era_pre_baroque',label:'バロック以前'},{id:'era_classical',label:'古典'},{id:'era_early_romantic',label:'初期ロマン'},{id:'era_late_romantic',label:'後期ロマン'},{id:'era_fin_de_siecle',label:'世紀末'}],
+   rest:[{id:'era_20th_century',label:'20世紀'},{id:'era_contemporary',label:'現代'}]},
+  {id:'inst',name:'基礎・編成',dv:false,v:false,
+   initial:[{id:'inst_double_wind',label:'2管'},{id:'inst_triple_wind',label:'3管'},{id:'inst_quadruple_wind',label:'4管'},{id:'inst_chorus',label:'合唱'},{id:'inst_vocal_solo',label:'独唱'}],
+   rest:[{id:'inst_organ',label:'オルガン'},{id:'inst_offstage',label:'舞台裏'},{id:'inst_special',label:'特殊楽器'},{id:'inst_strings_only',label:'弦のみ'},{id:'inst_winds_perc_only',label:'管打のみ'},{id:'inst_str_woodwind',label:'弦＋木管'},{id:'inst_str_brass',label:'弦＋金管'},{id:'inst_str_perc',label:'弦＋打'},{id:'inst_trombone',label:'トロンボーン'},{id:'inst_tuba',label:'チューバ'},{id:'inst_harp',label:'ハープ'},{id:'inst_piano',label:'ピアノ'},{id:'inst_celesta',label:'チェレスタ'},{id:'inst_perc_up_to_3',label:'パーカッション3名以内'},{id:'inst_perc_4_or_more',label:'パーカッション4名以上'}]},
+  {id:'diff',name:'基礎・難易度',dv:false,v:false,
+   initial:[{id:'level_junior',label:'ジュニアオケ'},{id:'level_student',label:'学生オケ'},{id:'level_amateur_basic',label:'社会人オケ初級'},{id:'level_amateur_adv',label:'社会人オケ上級'},{id:'level_pro',label:'プロオケ'}],
+   rest:[]},
+  {id:'region',name:'国家・地域',dv:false,v:false,
+   initial:[{id:'region_germany_austria',label:'ドイツ・オーストリア'},{id:'region_france',label:'フランス'},{id:'region_russia',label:'ロシア'},{id:'region_nordic',label:'北欧'},{id:'region_uk_us',label:'英米'}],
+   rest:[{id:'region_italy',label:'イタリア'},{id:'region_spain',label:'スペイン'},{id:'region_eastern_europe',label:'東欧'},{id:'region_latin_america',label:'中南米'},{id:'region_asia',label:'アジア'}]},
+  {id:'freq',name:'基礎・演奏頻度',dv:false,v:false,
+   initial:[{id:'freq_well_known',label:'超有名'},{id:'freq_known',label:'有名'},{id:'freq_moderate',label:'中堅'},{id:'freq_rare',label:'稀少'},{id:'freq_unperformed',label:'未演奏級'}],
+   rest:[]}
 ];
 
-const VALID_TAG_SET = new Set(CATS.flatMap(c => c.core.map(t => c.name+'::'+t)));
+const VALID_TAG_SET = new Set(
+  CATS.flatMap(c=>(c.initial||[]).concat(c.rest||[]).map(t=>c.name+'::'+t.label))
+);
 
 const PIECES = [
   {id:'p0000',cmp:'ニコライ',en:'Nicolai',title:'歌劇「ウィンザーの陽気な女房たち」序曲',isSym:false,dur:8,yr:1981,con:'第7回定期',tags:['リズミカル','ロマン派','有名曲','ストーリー性','独墺/ハプスブルク']},
@@ -999,6 +1212,7 @@ function setF(f){
 function selPiece(id){
   cur=id;aiProp=[];
   CATS.forEach(c=>{c.v=c.dv;});
+  expandedCats.clear();
   renderList();renderEditor();
 }
 
@@ -1013,6 +1227,7 @@ function renderEditor(){
     +'<div class="piece-composer">'+(p.en&&p.en!==p.cmp?esc(p.cmp)+' '+esc(p.en):esc(p.cmp))+'</div>'
     +'<div class="piece-title">'+esc(p.title)+'</div>'
     +'<div class="piece-meta"><span class="badge">'+p.dur+'分</span><span class="badge yr">'+esc(yr)+'</span></div>'
+    +'<div class="stream-links" id="stream-links-box"></div>'
     +'</div>'
     +'<div class="etags-sec">'
     +'<div class="etags-label">意味タグ</div>'
@@ -1026,52 +1241,140 @@ function renderEditor(){
 
     +'<div id="tagcats"></div>';
   renderTags();updatePreview();
+  // ストリーミングリンクを非同期で生成（英語曲名キャッシュ使用）
+  buildStreamLinks(p);
 }
+
+// カテゴリ内展開状態
+var expandedCats = new Set();
 
 function renderTags(){
   const el=document.getElementById('tagcats');
   if(!el||!cur)return;
   const visible=CATS.filter(c=>c.v);
   const hidden=CATS.filter(c=>!c.v);
+
   const catsHtml=visible.map(cat=>{
-    const sel=(DB[cur]||[]).filter(function(tid){return cat.core.some(function(tc){return tc.id===tid;});}).length;
-    const chips=cat.core.map(function(tc){
+    // initial + rest（展開時）の全タグを取得
+    const allTags=cat.initial.concat(cat.rest||[]);
+    const sel=(DB[cur]||[]).filter(function(tid){
+      return allTags.some(function(tc){return tc.id===tid;});
+    }).length;
+    const isExp=expandedCats.has(cat.id);
+    const visibleTags=isExp ? allTags : cat.initial;
+    const hasMore=(cat.rest||[]).length>0;
+
+    const chips=visibleTags.map(function(tc){
       const on=isOn(cur,tc.id);
       const ai=aiProp.indexOf(tc.id)>=0;
       return '<button class="tchip'+(on?' on':'')+(ai&&!on?' ai-prop':'')+'" data-tagid="'+esc(tc.id)+'">'+esc(tc.label)+'</button>';
     }).join('');
+
+    const moreBtn=hasMore
+      ? (isExp
+        ? '<button class="more-tags-btn" data-catid="'+esc(cat.id)+'">▲ 折りたたむ</button>'
+        : '<button class="more-tags-btn" data-catid="'+esc(cat.id)+'">+ '+(cat.rest.length)+'タグを表示</button>')
+      : '';
+
     return '<div class="cat-section">'
       +'<div class="cat-hdr"><span class="cat-name">'+esc(cat.name)+'</span>'+(sel?'<span class="cat-count">'+sel+'</span>':'')+'</div>'
       +'<div class="tags-row">'+chips+'</div>'
+      +moreBtn
       +'</div>';
   }).join('');
+
   const addBtn=hidden.length>0
     ?'<div class="add-cat-wrap"><button id="add-cat-btn">+ カテゴリを追加（残り'+hidden.length+'件）</button></div>'
     :'';
+
   el.innerHTML=catsHtml+addBtn;
+
+  // チップON/OFF
   el.querySelectorAll('.tchip').forEach(b=>{
     b.addEventListener('click',ev=>{ev.stopPropagation();togTag(b.dataset.tagid);});
   });
+  // カテゴリ内もっと見る
+  el.querySelectorAll('.more-tags-btn').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const cid=b.dataset.catid;
+      if(expandedCats.has(cid))expandedCats.delete(cid);
+      else expandedCats.add(cid);
+      renderTags();
+    });
+  });
+  // カテゴリ追加
   const ab=document.getElementById('add-cat-btn');
   if(ab)ab.addEventListener('click',()=>{
     const next=CATS.find(c=>!c.v);
     if(next){next.v=true;renderTags();}
   });
 }
-
-function updateMtPreview(){
-  const el=document.getElementById('mt-preview');
-  if(!el||!cur)return;
-  const mt=getMT(cur);
-  el.innerHTML=mt.length
-    ?mt.map(x=>'<span class="etag">'+esc(x.label)+'</span>').join('')
-    :'<span style="font-size:11px;color:#aeaeb2">未設定</span>';
-}
 function updatePreview(){
   const mt=getMT(cur);
   document.getElementById('spreview').textContent=mt.length
     ?mt.map(x=>x.label).join(' · '):'タグ未設定';
 }
+// 英語曲名キャッシュ（localStorage: kcpo-title-cache）
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyrORWu73s0VPTDjO3toCk5WAwy7HKMpWElnw8CP7ui9TUKJiQUlleY2B_lyxIP0WjGkQ/exec';
+
+var _titleCache = (function(){
+  try{ return JSON.parse(localStorage.getItem('kcpo-title-cache')||'{}'); }catch(e){ return {}; }
+})();
+
+function buildStreamLinks(p){
+  var box=document.getElementById('stream-links-box');
+  if(!box)return;
+
+  // タップ時に英訳してURLを開く
+  function openWithTranslation(service){
+    // キャッシュ済みならすぐ開く
+    if(_titleCache[p.id]){
+      openService(service, _titleCache[p.id]);
+      return;
+    }
+    // GAS経由で英訳してから開く
+    // ローディング表示しない（ラベルを維持）
+    fetch(GAS_URL,{
+      method:'POST',
+      redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'translate',title:p.title})
+    })
+    .then(function(r){return r.text();})
+    .then(function(t){
+      var d=JSON.parse(t);
+      var en=(d.en||p.title).trim();
+      _titleCache[p.id]=en;
+      try{localStorage.setItem('kcpo-title-cache',JSON.stringify(_titleCache));}catch(e){}
+      openService(service,en);
+    })
+    .catch(function(e){ console.log('translate error',e); openService(service,p.title); });
+  }
+
+  function openService(service,enTitle){
+    var q=encodeURIComponent((p.en||p.cmp)+' '+enTitle);
+    var urls={
+      yt:'https://www.youtube.com/results?search_query='+q,
+      sp:'https://open.spotify.com/search/'+q,
+      am:'https://music.apple.com/search?term='+q
+    };
+    window.open(urls[service],'_blank','noopener');
+  }
+
+  // ボタンを日本語タイトルで即座に表示（クリック時に英訳）
+  box.innerHTML=
+    '<button class="sl-btn sl-yt" data-svc="yt">▶ YouTube</button>'
+    +'<button class="sl-btn sl-sp" data-svc="sp">♪ Spotify</button>'
+    +'<button class="sl-btn sl-am" data-svc="am">♫ Apple Music</button>';
+
+  box.querySelectorAll('.sl-btn').forEach(function(btn){
+    btn.addEventListener('click',function(e){
+      e.preventDefault();
+      openWithTranslation(btn.dataset.svc);
+    });
+  });
+}
+
 function updateStats(){
   const total=PIECES.length;
   const tagged=PIECES.filter(p=>hasMT(p.id)).length;
@@ -1096,10 +1399,6 @@ function doExport(){
   document.getElementById('export-name').value='';
   document.getElementById('export-msg').value='';
   document.getElementById('msg-count').textContent='0';
-  // メールボタンをリセット（ダウンロード先行が必要）
-  _dlDone=false;
-  var okBtn=document.getElementById('modal-ok');
-  okBtn.disabled=true; okBtn.style.opacity='.4'; okBtn.style.cursor='not-allowed';
   document.getElementById('export-modal').classList.add('open');
 }
 // 共通データ生成
@@ -1131,54 +1430,24 @@ function runDownload(userName, userMsg){
   a.href=URL.createObjectURL(blob);
   a.download=fname;
   a.click();URL.revokeObjectURL(a.href);
-  // 次のmailto用にファイル名を保持
-  runDownload._lastFname=fname;
-  runDownload._lastUser=userName;
-  runDownload._lastMsg=userMsg;
 }
-// メール起動のみ
 function runMailto(userName, userMsg){
-  const fname=runDownload._lastFname||('kcpo-tags-'+userName+'.json');
   const {data}=buildExportData(userName,userMsg);
-  const tagged=data.pieces;
-
-  // ② メールアプリを開く（宛先・件名・本文を自動入力）
-  setTimeout(function(){
-    var tagged=data.pieces;
-    var subject=encodeURIComponent('【KCPOタグ付け結果】'+userName+' '+new Date().toISOString().slice(0,10));
-    // 本文: 名前・メッセージ・曲ごとのタグ一覧（ラベル形式）
-    var lines=[];
-    lines.push('差出人: '+userName);
-    if(userMsg)lines.push('メッセージ: '+userMsg);
-    lines.push('');
-    lines.push('■ タグ付け結果（'+tagged.length+'曲）');
-    lines.push('');
-    tagged.forEach(function(p){
-      var labels=p.annotations[0].tags.map(function(t){return t.label;}).join(' / ');
-      lines.push('▶ '+p.composer+' '+p.piece);
-      lines.push('  '+labels);
-      lines.push('');
-    });
-    lines.push('---');
-    lines.push('添付ファイル名: '+fname);
-    lines.push('（JSONファイルをこのメールに添付してください）');
-    var body=encodeURIComponent(lines.join('\n'));
-    // mailto: は本文が長すぎるとブラウザが切り捨てるため2000文字で制限
-    var bodyStr=lines.join('\n');
-    if(bodyStr.length>2000){
-      var short=[];
-      short.push('差出人: '+userName);
-      if(userMsg)short.push('メッセージ: '+userMsg);
-      short.push('');
-      short.push('タグ付け完了: '+tagged.length+'曲');
-      short.push('詳細はダウンロードしたJSONファイルをご確認ください。');
-      short.push('（添付してください: '+fname+'）');
-      body=encodeURIComponent(short.join('\n'));
-    }
-    window.location.href='mailto:clarinetist3@gmail.com?subject='+subject+'&body='+body;
-  },800);
+  // GASにデータを送信
+  fetch(GAS_URL,{
+    method:'POST',
+    redirect:'follow',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify(Object.assign({action:'submit'},data))
+  })
+  .then(function(r){return r.text();})
+  .then(function(){
+    showThanks();
+  })
+  .catch(function(){
+    showThanks();
+  });
 }
-
 async function proposeAI(){
   if(!cur){alert('曲を選択してください');return;}
   let key=(localStorage.getItem('kcpo-api-key')||'').trim();
@@ -1239,30 +1508,7 @@ document.getElementById('export-modal').addEventListener('click',function(e){
 document.getElementById('export-msg').addEventListener('input',function(){
   document.getElementById('msg-count').textContent=this.value.length;
 });
-// ダウンロード済みフラグ
-var _dlDone=false;
-
-document.getElementById('modal-dl').addEventListener('click',function(){
-  const name=document.getElementById('export-name').value.trim();
-  if(!name){
-    document.getElementById('export-name').style.borderColor='#c0624a';
-    document.getElementById('export-name').focus();
-    return;
-  }
-  document.getElementById('export-name').style.borderColor='';
-  const msg=document.getElementById('export-msg').value.trim();
-  // JSONダウンロードのみ実行
-  runDownload(name,msg);
-  // ダウンロード済みフラグを立てメールボタンを有効化
-  _dlDone=true;
-  const okBtn=document.getElementById('modal-ok');
-  okBtn.disabled=false;
-  okBtn.style.opacity='';
-  okBtn.style.cursor='';
-});
-
 document.getElementById('modal-ok').addEventListener('click',function(){
-  if(!_dlDone)return;
   const name=document.getElementById('export-name').value.trim();
   if(!name){
     document.getElementById('export-name').style.borderColor='#c0624a';
@@ -1317,6 +1563,18 @@ document.getElementById('modal-ok').addEventListener('click',function(){
   rz.addEventListener('touchmove',  onMove, {passive:false});
   rz.addEventListener('touchend',   onUp,   {passive:false});
 })();
+
+function showThanks(){
+  // モーダル内にthanksメッセージを表示
+  document.getElementById('modal-actions').style.display='none';
+  document.getElementById('modal-thanks').style.display='block';
+  // 3秒後にモーダルを閉じる
+  setTimeout(function(){
+    document.getElementById('export-modal').classList.remove('open');
+    document.getElementById('modal-actions').style.display='';
+    document.getElementById('modal-thanks').style.display='none';
+  },3000);
+}
 
 loadDB();renderList();updateStats();
 </script>
