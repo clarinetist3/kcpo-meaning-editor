@@ -69,7 +69,7 @@ body{font-family:var(--font-ja);background:#f5f5f7;color:#1d1d1f;font-size:13px;
 .ai-status{font-size:11px;color:#185FA5;margin-top:3px;opacity:.8}
 .cat-section{margin-bottom:14px}
 .cat-hdr{display:flex;align-items:center;justify-content:space-between;padding:4px 0 6px;border-bottom:.5px solid #d2d2d7;margin-bottom:8px}
-.cat-name{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#aeaeb2}
+.cat-name{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#aeaeb2}
 .cat-count{font-size:11px;color:#639922;font-weight:600;background:#EAF3DE;padding:1px 7px;border-radius:20px}
 .tags-row{display:flex;flex-wrap:wrap;gap:6px}
 .tchip{padding:5px 12px;border:1px solid #c7c7cc;border-radius:20px;background:#fff;color:#6e6e73;font-size:12px;font-family:var(--font-ja);cursor:pointer;white-space:nowrap;user-select:none;-webkit-user-select:none;transition:border-color .1s,background .1s,color .1s}
@@ -81,7 +81,8 @@ body{font-family:var(--font-ja);background:#f5f5f7;color:#1d1d1f;font-size:13px;
 .add-cat-wrap button:hover{background:#f9f9fb;color:#6e6e73}
 .save-bar{padding:10px 16px;border-top:.5px solid #d2d2d7;display:flex;align-items:center;gap:10px;flex-shrink:0;background:#fff}
 .save-preview{flex:1;font-size:11px;color:#aeaeb2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.more-tags-btn{display:inline-block;margin-top:6px;padding:0;border:none;background:none;color:#aeaeb2;font-size:11px;font-family:var(--font-ja);cursor:pointer;letter-spacing:.02em}
+.more-tags-btn{display:inline-block;margin-top:6px;padding:0;border:none;background:none;color:#aeaeb2;font-size:11px;font-family:var(--font-ja);cursor:pointer;text-decoration:none;opacity:.7}
+.more-tags-btn:hover{color:#639922;opacity:1}
 .more-tags-btn:hover{color:#639922}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#c7c7cc;border-radius:2px}
 
@@ -144,7 +145,7 @@ body{font-family:var(--font-ja);background:#f5f5f7;color:#1d1d1f;font-size:13px;
         <span class="ss-msg" id="ssmsg"></span>
         <button class="btn btn-ai" id="btn-ai" style="display:none">AI提案</button>
         <button class="btn btn-save-soft" id="btn-save">保存</button>
-        <button class="btn btn-export-primary" id="btn-export">タグデータを送る</button>
+        <button class="btn btn-export-primary" id="btn-export">送信</button>
       </div>
     </div>
     <div class="stat-row">
@@ -1283,8 +1284,14 @@ function renderTags(){
       +'</div>';
   }).join('');
 
+  // ボタンラベルを状況に応じて変更
+  const secondGroup=['emo','light','brand','ens'];
+  const secondAllHidden=secondGroup.every(id=>{const c=CATS.find(x=>x.id===id);return c&&!c.v;});
+  const addBtnLabel=secondAllHidden
+    ?'+ 感情・色彩・ブランド・団員体験を表示'
+    :'+ カテゴリを追加（残り'+hidden.length+'件）';
   const addBtn=hidden.length>0
-    ?'<div class="add-cat-wrap"><button id="add-cat-btn">+ カテゴリを追加（残り'+hidden.length+'件）</button></div>'
+    ?'<div class="add-cat-wrap"><button id="add-cat-btn">'+addBtnLabel+'</button></div>'
     :'';
 
   el.innerHTML=catsHtml+addBtn;
@@ -1305,8 +1312,26 @@ function renderTags(){
   // カテゴリ追加
   const ab=document.getElementById('add-cat-btn');
   if(ab)ab.addEventListener('click',()=>{
-    const next=CATS.find(c=>!c.v);
-    if(next){next.v=true;renderTags();}
+    // 感情・光色彩・ブランディング・団員体験は一括展開
+    const secondGroup=['emo','light','brand','ens'];
+    const allSecondHidden=secondGroup.some(id=>{
+      const c=CATS.find(x=>x.id===id);
+      return c&&!c.v;
+    });
+    if(allSecondHidden||secondGroup.every(id=>{
+      const c=CATS.find(x=>x.id===id); return c&&!c.v;
+    })){
+      // 4カテゴリを一括で展開
+      secondGroup.forEach(id=>{
+        const c=CATS.find(x=>x.id===id);
+        if(c)c.v=true;
+      });
+    } else {
+      // それ以降は1つずつ
+      const next=CATS.find(c=>!c.v);
+      if(next)next.v=true;
+    }
+    renderTags();
   });
 }
 function updatePreview(){
